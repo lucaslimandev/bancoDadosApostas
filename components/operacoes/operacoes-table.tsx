@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Copy, MoreHorizontal, Pencil, Search, Trash2 } from "lucide-react";
-import { cn, formatU } from "@/lib/utils";
+import { ArrowUpDown, Copy, MoreHorizontal, Pencil, Search, Trash2, Clock } from "lucide-react";
+import { cn, formatBRL, formatBRLSinal } from "@/lib/utils";
 
 type Coluna = "data" | "liga" | "tipo" | "metodo" | "stake" | "resultado" | "lucro";
 
@@ -39,6 +39,7 @@ function CabecalhoOrdenavel({
 export function OperacoesTable({
   operacoes,
   onEdit,
+  onEncerrar,
   onDuplicate,
   onDelete,
   selectedIds,
@@ -47,6 +48,7 @@ export function OperacoesTable({
 }: {
   operacoes: Operacao[];
   onEdit: (op: Operacao) => void;
+  onEncerrar: (op: Operacao) => void;
   onDuplicate: (op: Operacao) => void;
   onDelete: (op: Operacao) => void;
   selectedIds: Set<string>;
@@ -75,7 +77,7 @@ export function OperacoesTable({
       let comp = 0;
       if (coluna === "data") comp = new Date(a.data).getTime() - new Date(b.data).getTime();
       else if (coluna === "stake") comp = a.stake - b.stake;
-      else if (coluna === "lucro") comp = a.lucro - b.lucro;
+      else if (coluna === "lucro") comp = (a.lucro ?? 0) - (b.lucro ?? 0);
       else if (coluna === "liga") comp = a.liga.nome.localeCompare(b.liga.nome);
       else if (coluna === "metodo") comp = a.metodo.nome.localeCompare(b.metodo.nome);
       else comp = String(a[coluna]).localeCompare(String(b[coluna]));
@@ -169,26 +171,36 @@ export function OperacoesTable({
                 <TableCell>
                   <Badge variant="secondary">{op.tipo}</Badge>
                 </TableCell>
-                <TableCell className="text-sm tabular-nums">{op.stake.toFixed(1)}u</TableCell>
+                <TableCell className="text-sm tabular-nums">{formatBRL(op.stake)}</TableCell>
                 <TableCell>
-                  <Badge
-                    className={cn(
-                      op.resultado === "Green" && "bg-profit/15 text-profit border-transparent",
-                      op.resultado === "Red" && "bg-loss/15 text-loss border-transparent",
-                      op.resultado === "Anulado" && "bg-muted text-muted-foreground border-transparent"
-                    )}
-                  >
-                    {op.resultado}
-                  </Badge>
+                  {op.status === "Aberta" ? (
+                    <Badge className="bg-gold/15 text-gold border-transparent gap-1">
+                      <Clock className="size-3" /> Em andamento
+                    </Badge>
+                  ) : (
+                    <Badge
+                      className={cn(
+                        op.resultado === "Green" && "bg-profit/15 text-profit border-transparent",
+                        op.resultado === "Red" && "bg-loss/15 text-loss border-transparent",
+                        op.resultado === "Anulado" && "bg-muted text-muted-foreground border-transparent"
+                      )}
+                    >
+                      {op.resultado}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell
                   className={cn(
                     "text-right tabular-nums font-medium",
-                    op.lucro > 0 && "text-profit",
-                    op.lucro < 0 && "text-loss"
+                    (op.lucro ?? 0) > 0 && "text-profit",
+                    (op.lucro ?? 0) < 0 && "text-loss"
                   )}
                 >
-                  {formatU(op.lucro, 2)}
+                  {op.lucro === null || op.lucro === undefined ? (
+                    <span className="text-muted-foreground font-normal">—</span>
+                  ) : (
+                    formatBRLSinal(op.lucro)
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -196,6 +208,11 @@ export function OperacoesTable({
                       <MoreHorizontal className="size-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {op.status === "Aberta" && (
+                        <DropdownMenuItem onClick={() => onEncerrar(op)}>
+                          <Clock className="size-3.5" /> Encerrar
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => onEdit(op)}>
                         <Pencil className="size-3.5" /> Editar
                       </DropdownMenuItem>

@@ -1,11 +1,14 @@
 import { getConfiguracao } from "@/lib/actions/configuracao";
+import { getOperacoes } from "@/lib/actions/operacoes";
+import { calcularMetricas } from "@/lib/calculations";
 import { ConfiguracaoForm } from "@/components/configuracoes/configuracao-form";
 import { DadosActions } from "@/components/configuracoes/dados-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConfiguracoesPage() {
-  const configuracao = await getConfiguracao();
+  const [configuracao, operacoes] = await Promise.all([getConfiguracao(), getOperacoes()]);
+  const metricas = calcularMetricas(operacoes, configuracao.bancaInicial);
 
   return (
     <div>
@@ -15,7 +18,7 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ConfiguracaoForm configuracao={configuracao} />
+        <ConfiguracaoForm configuracao={configuracao} bancaAtual={metricas.bancaAtual} />
         <DadosActions />
       </div>
     </div>

@@ -11,7 +11,7 @@ import {
   format,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, formatBRLCompacto } from "@/lib/utils";
 import { diaKey } from "@/lib/calculations";
 import { AlertTriangle, Trophy } from "lucide-react";
 
@@ -94,8 +94,7 @@ export function MonthGrid({
                       resumo.lucro === 0 && "text-muted-foreground"
                     )}
                   >
-                    {resumo.lucro > 0 ? "+" : ""}
-                    {resumo.lucro.toFixed(1)}u
+                    {formatBRLCompacto(resumo.lucro)}
                   </span>
                   <div className="flex items-center gap-1">
                     {resumo.stopLossBatido && (

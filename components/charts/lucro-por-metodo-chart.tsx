@@ -3,12 +3,13 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/charts/banca-chart";
+import { formatBRL } from "@/lib/utils";
 
 export function LucroPorMetodoChart({ dados }: { dados: Array<{ metodo: string; lucro: number; cor: string }> }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">Lucro por método (u)</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">Lucro por método (R$)</CardTitle>
       </CardHeader>
       <CardContent className="h-64">
         {dados.length === 0 ? (
@@ -21,7 +22,7 @@ export function LucroPorMetodoChart({ dados }: { dados: Array<{ metodo: string; 
               <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} width={40} />
               <Tooltip
                 contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
-                formatter={(v) => [`${Number(v).toFixed(2)}u`, "Lucro"]}
+                formatter={(v) => [formatBRL(Number(v)), "Lucro"]}
               />
               <Bar dataKey="lucro" radius={[6, 6, 0, 0]}>
                 {dados.map((d, i) => (

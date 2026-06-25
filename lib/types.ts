@@ -6,6 +6,9 @@ import type {
   Liga as LigaModel,
   Time as TimeModel,
   LigaTipo as LigaTipoModel,
+  FaseOperacao as FaseOperacaoModel,
+  StatusOperacao as StatusOperacaoModel,
+  ModoStake as ModoStakeModel,
 } from "@prisma/client";
 
 export type Configuracao = ConfiguracaoModel;
@@ -14,6 +17,9 @@ export type Metodo = MetodoModel;
 export type Liga = LigaModel;
 export type Time = TimeModel;
 export type LigaTipo = LigaTipoModel;
+export type FaseOperacao = FaseOperacaoModel;
+export type StatusOperacao = StatusOperacaoModel;
+export type ModoStake = ModoStakeModel;
 
 export type TipoOperacao = "Lay" | "Back" | "Trade";
 export type ResultadoOperacao = "Green" | "Red" | "Anulado";

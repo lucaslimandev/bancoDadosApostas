@@ -3,6 +3,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/charts/banca-chart";
+import { formatBRL } from "@/lib/utils";
 
 export function HistoricoMensalChart({
   dados,
@@ -12,7 +13,7 @@ export function HistoricoMensalChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">Histórico mensal: realizado vs meta (u)</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">Histórico mensal: realizado vs meta (R$)</CardTitle>
       </CardHeader>
       <CardContent className="h-72">
         {dados.length === 0 ? (
@@ -25,7 +26,7 @@ export function HistoricoMensalChart({
               <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} width={40} />
               <Tooltip
                 contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
-                formatter={(v) => `${Number(v).toFixed(2)}u`}
+                formatter={(v) => formatBRL(Number(v))}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="meta" name="Meta" fill="var(--color-muted-foreground)" radius={[6, 6, 0, 0]} opacity={0.4} />

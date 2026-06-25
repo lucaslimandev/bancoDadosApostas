@@ -18,7 +18,7 @@ export default async function MetasPage() {
   const historico = todosOsMeses.map((mes) => ({
     mes,
     lucro: porMes.get(mes)?.lucro ?? 0,
-    meta: metas.find((m) => m.mes === mes)?.metaLucroUnidades ?? 0,
+    meta: metas.find((m) => m.mes === mes)?.metaLucro ?? 0,
   }));
 
   return (
@@ -31,7 +31,7 @@ export default async function MetasPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <MetaFormCard
           mes={mesAtual}
-          metaLucroUnidades={metaDoMesAtual?.metaLucroUnidades ?? 20}
+          metaLucro={metaDoMesAtual?.metaLucro ?? 1000}
           metaOperacoes={metaDoMesAtual?.metaOperacoes ?? 30}
           lucroRealizado={realizadoMesAtual.lucro}
           operacoesRealizadas={realizadoMesAtual.numOperacoes}

@@ -8,14 +8,16 @@ export function AnimatedNumber({
   decimals = 1,
   prefix = "",
   suffix = "",
+  format,
 }: {
   value: number;
   decimals?: number;
   prefix?: string;
   suffix?: string;
+  format?: (v: number) => string;
 }) {
   const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (v) => `${prefix}${v.toFixed(decimals)}${suffix}`);
+  const rounded = useTransform(motionValue, (v) => (format ? format(v) : `${prefix}${v.toFixed(decimals)}${suffix}`));
   const previous = useRef(0);
 
   useEffect(() => {

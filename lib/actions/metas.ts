@@ -16,7 +16,7 @@ export async function salvarMeta(input: MetaFormValues) {
   const data = metaSchema.parse(input);
   const meta = await prisma.meta.upsert({
     where: { mes: data.mes },
-    update: { metaLucroUnidades: data.metaLucroUnidades, metaOperacoes: data.metaOperacoes },
+    update: { metaLucro: data.metaLucro, metaOperacoes: data.metaOperacoes },
     create: data,
   });
   revalidatePath("/metas");

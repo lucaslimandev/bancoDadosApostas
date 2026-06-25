@@ -1,4 +1,4 @@
-import type { TipoOperacao, ResultadoOperacao } from "@prisma/client";
+import type { TipoOperacao, ResultadoOperacao, FaseOperacao, StatusOperacao } from "@prisma/client";
 
 function diasAtras(n: number, hora = "16:30") {
   const d = new Date();
@@ -8,7 +8,18 @@ function diasAtras(n: number, hora = "16:30") {
   return d;
 }
 
-export type OperacaoSeedNomes = {
+// Os valores brutos abaixo são definidos numa escala simples (equivalente à antiga
+// "unidade") e convertidos para R$ por FATOR_CONVERSAO ao gerar o seed final.
+const FATOR_CONVERSAO = 50;
+
+const CRITERIOS_ENTRADA: Record<string, string> = {
+  "Lay Empate": "Empate sobrevalorizado pré-jogo, equipes com tendência ofensiva",
+  "Scalping Ao Vivo": "Movimento de odd após pressão ofensiva clara",
+  "Pressão Reversa": "Favorito com odd inflada por jogo fora de casa",
+  "Cash Out Verde": "Gol cedo travou vantagem, saída programada na variação de odd",
+};
+
+type OperacaoSeedBruta = {
   data: Date;
   ligaNome: string;
   timeCasaNome: string;
@@ -26,7 +37,81 @@ export type OperacaoSeedNomes = {
   observacoes?: string;
 };
 
+export type OperacaoSeedNomes = {
+  data: Date;
+  ligaNome: string;
+  timeCasaNome: string;
+  timeForaNome: string;
+  mercado: string;
+  metodoNome: string;
+  tipo: TipoOperacao;
+  momento: string;
+  fase: FaseOperacao;
+  minutoEntrada?: number | null;
+  periodo?: string | null;
+  oddEntrada: number;
+  oddSaida?: number;
+  stake: number;
+  responsabilidade?: number;
+  criterioEntrada?: string;
+  criterioSaida?: string;
+  status: StatusOperacao;
+  resultado?: ResultadoOperacao;
+  lucro?: number;
+  observacoes?: string;
+};
+
+function parseMomento(momento: string): { fase: FaseOperacao; minutoEntrada: number | null; periodo: string | null } {
+  if (momento === "Pré-jogo") return { fase: "PreJogo", minutoEntrada: null, periodo: null };
+  const match = momento.match(/^(\d+)'\s*(.*)$/);
+  if (!match) return { fase: "AoVivo", minutoEntrada: null, periodo: null };
+  return { fase: "AoVivo", minutoEntrada: Number(match[1]), periodo: match[2] || null };
+}
+
 export function gerarOperacoesExemplo(): OperacaoSeedNomes[] {
+  const encerradas: OperacaoSeedNomes[] = gerarOperacoesExemploBruto().map((op) => {
+    const { fase, minutoEntrada, periodo } = parseMomento(op.momento);
+    return {
+      ...op,
+      fase,
+      minutoEntrada,
+      periodo,
+      stake: round2(op.stake * FATOR_CONVERSAO),
+      responsabilidade: op.responsabilidade ? round2(op.responsabilidade * FATOR_CONVERSAO) : undefined,
+      lucro: round2(op.lucro * FATOR_CONVERSAO),
+      criterioEntrada: CRITERIOS_ENTRADA[op.metodoNome],
+      criterioSaida: op.oddSaida ? "Variação de odd favorável, lucro travado via cash out" : undefined,
+      status: "Encerrada",
+    };
+  });
+
+  const aberta: OperacaoSeedNomes = {
+    data: diasAtras(0, "20:15"),
+    ligaNome: "Brasileirão Série A",
+    timeCasaNome: "Flamengo",
+    timeForaNome: "Palmeiras",
+    mercado: "Resultado Final",
+    metodoNome: "Lay Empate",
+    tipo: "Lay",
+    momento: "38' 1ºT",
+    fase: "AoVivo",
+    minutoEntrada: 38,
+    periodo: "1ºT",
+    oddEntrada: 3.6,
+    stake: 200,
+    responsabilidade: 520,
+    criterioEntrada: CRITERIOS_ENTRADA["Lay Empate"],
+    status: "Aberta",
+  };
+
+  return [...encerradas, aberta];
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function gerarOperacoesExemploBruto(): OperacaoSeedBruta[] {
   return [
     {
       data: diasAtras(28),
@@ -301,10 +386,16 @@ export async function resolverOperacoesExemplo(prisma: ClientComCatalogos) {
       metodoId: metodo.id,
       tipo: seed.tipo,
       momento: seed.momento,
+      fase: seed.fase,
+      minutoEntrada: seed.minutoEntrada,
+      periodo: seed.periodo,
       oddEntrada: seed.oddEntrada,
       oddSaida: seed.oddSaida,
       stake: seed.stake,
       responsabilidade: seed.responsabilidade,
+      criterioEntrada: seed.criterioEntrada,
+      criterioSaida: seed.criterioSaida,
+      status: seed.status,
       resultado: seed.resultado,
       lucro: seed.lucro,
       observacoes: seed.observacoes,

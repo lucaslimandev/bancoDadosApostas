@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OperacaoForm } from "@/components/operacoes/operacao-form";
-import { cn, formatU } from "@/lib/utils";
-import { Plus, ArrowLeft } from "lucide-react";
+import { cn, formatBRL, formatBRLSinal } from "@/lib/utils";
+import { Plus, ArrowLeft, Clock } from "lucide-react";
 
 export function DayPanel({
   data,
@@ -22,6 +22,7 @@ export function DayPanel({
   ligas,
   metodos,
   times,
+  valorStakeFixa,
   onClose,
 }: {
   data: Date | null;
@@ -29,16 +30,18 @@ export function DayPanel({
   ligas: Liga[];
   metodos: Metodo[];
   times: Time[];
+  valorStakeFixa: number;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [criando, setCriando] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const lucroTotal = operacoes.reduce((acc, o) => acc + o.lucro, 0);
-  const greens = operacoes.filter((o) => o.resultado === "Green").length;
-  const reds = operacoes.filter((o) => o.resultado === "Red").length;
-  const somaStake = operacoes.reduce((acc, o) => acc + o.stake, 0);
+  const encerradas = operacoes.filter((o) => o.status === "Encerrada");
+  const lucroTotal = encerradas.reduce((acc, o) => acc + (o.lucro ?? 0), 0);
+  const greens = encerradas.filter((o) => o.resultado === "Green").length;
+  const reds = encerradas.filter((o) => o.resultado === "Red").length;
+  const somaStake = encerradas.reduce((acc, o) => acc + o.stake, 0);
   const roiDia = somaStake > 0 ? (lucroTotal / somaStake) * 100 : 0;
 
   async function handleCreate(values: OperacaoFormValues) {
@@ -76,6 +79,7 @@ export function DayPanel({
               ligas={ligas}
               metodos={metodos}
               times={times}
+              valorStakeFixa={valorStakeFixa}
               defaultValues={data ? { data } : undefined}
               onSubmit={handleCreate}
               onCancel={() => setCriando(false)}
@@ -88,7 +92,7 @@ export function DayPanel({
                 <CardContent className="p-4 grid grid-cols-3 gap-3 text-center">
                   <div>
                     <p className={cn("text-lg font-semibold", lucroTotal > 0 && "text-profit", lucroTotal < 0 && "text-loss")}>
-                      {formatU(lucroTotal, 2)}
+                      {formatBRLSinal(lucroTotal)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">Lucro do dia</p>
                   </div>
@@ -120,15 +124,21 @@ export function DayPanel({
                         <span className="text-sm font-medium">
                           {op.timeCasa.nome} <span className="text-muted-foreground">x</span> {op.timeFora.nome}
                         </span>
-                        <Badge
-                          className={cn(
-                            op.resultado === "Green" && "bg-profit/15 text-profit border-transparent",
-                            op.resultado === "Red" && "bg-loss/15 text-loss border-transparent",
-                            op.resultado === "Anulado" && "bg-muted text-muted-foreground border-transparent"
-                          )}
-                        >
-                          {op.resultado}
-                        </Badge>
+                        {op.status === "Aberta" ? (
+                          <Badge className="bg-gold/15 text-gold border-transparent gap-1">
+                            <Clock className="size-3" /> Em andamento
+                          </Badge>
+                        ) : (
+                          <Badge
+                            className={cn(
+                              op.resultado === "Green" && "bg-profit/15 text-profit border-transparent",
+                              op.resultado === "Red" && "bg-loss/15 text-loss border-transparent",
+                              op.resultado === "Anulado" && "bg-muted text-muted-foreground border-transparent"
+                            )}
+                          >
+                            {op.resultado}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Badge variant="secondary" className="text-[10px]">{op.tipo}</Badge>
@@ -141,11 +151,15 @@ export function DayPanel({
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">
                           Odd {op.oddEntrada}
-                          {op.oddSaida ? ` → ${op.oddSaida}` : ""} · Stake {op.stake}u
+                          {op.oddSaida ? ` → ${op.oddSaida}` : ""} · Stake {formatBRL(op.stake)}
                         </span>
-                        <span className={cn("font-semibold tabular-nums", op.lucro > 0 && "text-profit", op.lucro < 0 && "text-loss")}>
-                          {formatU(op.lucro, 2)}
-                        </span>
+                        {op.lucro === null || op.lucro === undefined ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <span className={cn("font-semibold tabular-nums", op.lucro > 0 && "text-profit", op.lucro < 0 && "text-loss")}>
+                            {formatBRLSinal(op.lucro)}
+                          </span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

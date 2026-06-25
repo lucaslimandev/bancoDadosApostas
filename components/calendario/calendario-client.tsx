@@ -21,12 +21,14 @@ export function CalendarioClient({
   ligas,
   metodos,
   times,
+  valorStakeFixa,
 }: {
   operacoes: Operacao[];
   configuracao: Configuracao;
   ligas: Liga[];
   metodos: Metodo[];
   times: Time[];
+  valorStakeFixa: number;
 }) {
   const [mesAtual, setMesAtual] = useState(new Date());
   const [visao, setVisao] = useState<"mes" | "lista">("mes");
@@ -40,7 +42,7 @@ export function CalendarioClient({
   const resumosPorDia = useMemo(() => {
     const mapa = new Map<string, DiaResumo>();
     for (const [key, ops] of porDia) {
-      const lucro = ops.reduce((acc, o) => acc + o.lucro, 0);
+      const lucro = ops.reduce((acc, o) => acc + (o.lucro ?? 0), 0);
       mapa.set(key, {
         lucro,
         numOperacoes: ops.length,
@@ -111,6 +113,7 @@ export function CalendarioClient({
         ligas={ligas}
         metodos={metodos}
         times={times}
+        valorStakeFixa={valorStakeFixa}
         onClose={() => setDiaSelecionado(null)}
       />
     </div>

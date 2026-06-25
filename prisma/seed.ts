@@ -1,12 +1,14 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { resolverOperacoesExemplo } from "../lib/seed-data";
 import { METODOS_SEED, LIGAS_SEED, TIMES_SEED } from "../lib/seed-catalogs";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
+const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
+const adapter = databaseUrl.startsWith("postgres")
+  ? new PrismaPg({ connectionString: databaseUrl })
+  : new PrismaBetterSqlite3({ url: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -21,11 +23,12 @@ async function main() {
   console.log("Criando configuração padrão...");
   await prisma.configuracao.create({
     data: {
-      bancaInicial: 100,
-      valorUnidade: 50,
-      stopLossDiario: 5,
-      stopGainDiario: 8,
-      stakePadraoPercent: 2,
+      bancaInicial: 5000,
+      stakeModo: "Percentual",
+      stakeValor: 100,
+      stakePercentual: 2,
+      stopLossDiario: 250,
+      stopGainDiario: 400,
       maxOperacoesSimultaneas: 2,
       tema: "dark",
     },
@@ -35,12 +38,24 @@ async function main() {
   const hoje = new Date();
   const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   await prisma.meta.create({
-    data: { mes: mesAtual, metaLucroUnidades: 20, metaOperacoes: 30 },
+    data: { mes: mesAtual, metaLucro: 1000, metaOperacoes: 30 },
   });
 
   console.log(`Criando ${METODOS_SEED.length} métodos...`);
   for (const m of METODOS_SEED) {
-    await prisma.metodo.create({ data: { nome: m.nome, cor: m.cor, descricao: m.descricao } });
+    await prisma.metodo.create({
+      data: {
+        nome: m.nome,
+        cor: m.cor,
+        descricao: m.descricao,
+        usaBack: m.usaBack ?? true,
+        usaLay: m.usaLay ?? true,
+        stakesBack: m.stakesBack ?? 1,
+        stakesLay: m.stakesLay ?? 1,
+        criterioEntradaPadrao: m.criterioEntradaPadrao,
+        criterioSaidaPadrao: m.criterioSaidaPadrao,
+      },
+    });
   }
 
   console.log(`Criando ${LIGAS_SEED.length} ligas e competições...`);

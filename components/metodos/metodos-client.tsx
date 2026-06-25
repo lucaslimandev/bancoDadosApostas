@@ -17,7 +17,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 
 type MetodoComContagem = Metodo & { _count: { operacoes: number } };
 
-export function MetodosClient({ metodos }: { metodos: MetodoComContagem[] }) {
+export function MetodosClient({ metodos, valorStakeFixa }: { metodos: MetodoComContagem[]; valorStakeFixa: number }) {
   const router = useRouter();
   const [sheetAberto, setSheetAberto] = useState(false);
   const [editando, setEditando] = useState<Metodo | null>(null);
@@ -111,6 +111,18 @@ export function MetodosClient({ metodos }: { metodos: MetodoComContagem[] }) {
                 <Switch checked={m.ativo} onCheckedChange={() => handleToggleAtivo(m)} />
               </div>
               {m.descricao && <p className="text-xs text-muted-foreground line-clamp-2">{m.descricao}</p>}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {m.usaBack && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Back {m.stakesBack ?? 1} stake{(m.stakesBack ?? 1) !== 1 ? "s" : ""}
+                  </Badge>
+                )}
+                {m.usaLay && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Lay {m.stakesLay ?? 1} stake{(m.stakesLay ?? 1) !== 1 ? "s" : ""}
+                  </Badge>
+                )}
+              </div>
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-[10px]">
                   {m._count.operacoes} operações
@@ -140,6 +152,7 @@ export function MetodosClient({ metodos }: { metodos: MetodoComContagem[] }) {
           <div className="px-4 pb-4">
             <MetodoForm
               defaultValues={editando ?? undefined}
+              valorStakeFixa={valorStakeFixa}
               onSubmit={handleSubmit}
               onCancel={() => setSheetAberto(false)}
               submitLabel={editando ? "Salvar alterações" : "Criar"}

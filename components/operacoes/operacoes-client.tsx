@@ -32,25 +32,34 @@ import { FiltrosBar } from "@/components/dashboard/filtros-bar";
 import { useFiltrosStore } from "@/lib/store/filters";
 import { aplicarFiltros } from "@/lib/filter-operacoes";
 import { exportarOperacoesCSV, exportarOperacoesJSON, importarArquivoOperacoes } from "@/lib/csv";
-import { Download, FileUp, Plus, ChevronDown, Trash2, X } from "lucide-react";
+import { exposicaoReal } from "@/lib/calculations";
+import { formatBRL } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Download, FileUp, Plus, ChevronDown, Trash2, X, Clock } from "lucide-react";
 
 export function OperacoesClient({
   operacoes,
   ligas,
   metodos,
   times,
+  valorStakeFixa,
 }: {
   operacoes: Operacao[];
   ligas: Liga[];
   metodos: Metodo[];
   times: Time[];
+  valorStakeFixa: number;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filtros = useFiltrosStore();
   const operacoesFiltradas = useMemo(() => aplicarFiltros(operacoes, filtros), [operacoes, filtros]);
+  const operacoesAbertas = useMemo(() => operacoes.filter((o) => o.status === "Aberta"), [operacoes]);
+  const exposicaoAberta = useMemo(() => operacoesAbertas.reduce((acc, o) => acc + exposicaoReal(o), 0), [operacoesAbertas]);
   const [sheetAberto, setSheetAberto] = useState(false);
   const [editando, setEditando] = useState<Operacao | null>(null);
+  const [focarEncerramento, setFocarEncerramento] = useState(false);
   const [excluindo, setExcluindo] = useState<Operacao | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,11 +71,19 @@ export function OperacoesClient({
 
   function abrirCriacao() {
     setEditando(null);
+    setFocarEncerramento(false);
     setSheetAberto(true);
   }
 
   function abrirEdicao(op: Operacao) {
     setEditando(op);
+    setFocarEncerramento(false);
+    setSheetAberto(true);
+  }
+
+  function abrirEncerramento(op: Operacao) {
+    setEditando(op);
+    setFocarEncerramento(true);
     setSheetAberto(true);
   }
 
@@ -189,6 +206,37 @@ export function OperacoesClient({
         </div>
       </div>
 
+      {operacoesAbertas.length > 0 && (
+        <Card className="mb-4 border-gold/30 bg-gold/5">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Clock className="size-3.5 text-gold" /> Operações abertas ({operacoesAbertas.length})
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Exposição em aberto: <span className="font-medium text-foreground">{formatBRL(exposicaoAberta)}</span>
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {operacoesAbertas.map((op) => (
+                <div key={op.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px] shrink-0">{op.tipo}</Badge>
+                    <span className="truncate">
+                      {op.timeCasa.nome} <span className="text-muted-foreground">x</span> {op.timeFora.nome}
+                    </span>
+                    <span className="text-muted-foreground text-xs shrink-0">{formatBRL(op.stake)}</span>
+                  </div>
+                  <Button size="xs" variant="outline" className="shrink-0 gap-1" onClick={() => abrirEncerramento(op)}>
+                    Encerrar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <FiltrosBar ligas={ligas} metodos={metodos} times={times} />
 
       {selectedIds.size > 0 && (
@@ -217,6 +265,7 @@ export function OperacoesClient({
       <OperacoesTable
         operacoes={operacoesFiltradas}
         onEdit={abrirEdicao}
+        onEncerrar={abrirEncerramento}
         onDuplicate={handleDuplicate}
         onDelete={(op) => setExcluindo(op)}
         selectedIds={selectedIds}
@@ -227,14 +276,15 @@ export function OperacoesClient({
       <Sheet open={sheetAberto} onOpenChange={setSheetAberto}>
         <SheetContent side="right" className="overflow-y-auto sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>{editando ? "Editar operação" : "Nova operação"}</SheetTitle>
+            <SheetTitle>{focarEncerramento ? "Encerrar operação" : editando ? "Editar operação" : "Nova operação"}</SheetTitle>
           </SheetHeader>
           <div className="px-4 pb-4">
             <OperacaoForm
               ligas={ligas}
               metodos={metodos}
               times={times}
-              defaultValues={editando ? toFormValues(editando) : undefined}
+              valorStakeFixa={valorStakeFixa}
+              defaultValues={editando ? toFormValues(editando, focarEncerramento) : undefined}
               onSubmit={handleSubmit}
               onCancel={() => setSheetAberto(false)}
               submitLabel={editando ? "Salvar alterações" : "Registrar"}
@@ -285,7 +335,7 @@ export function OperacoesClient({
   );
 }
 
-function toFormValues(op: Operacao): OperacaoFormValues {
+function toFormValues(op: Operacao, forcarEncerramento = false): OperacaoFormValues {
   return {
     data: new Date(op.data),
     ligaId: op.ligaId,
@@ -295,12 +345,18 @@ function toFormValues(op: Operacao): OperacaoFormValues {
     metodoId: op.metodoId,
     tipo: op.tipo,
     momento: op.momento,
+    fase: op.fase,
+    minutoEntrada: op.minutoEntrada,
+    periodo: op.periodo,
     oddEntrada: op.oddEntrada,
     oddSaida: op.oddSaida,
     stake: op.stake,
     responsabilidade: op.responsabilidade,
-    resultado: op.resultado,
-    lucro: op.lucro,
+    criterioEntrada: op.criterioEntrada,
+    criterioSaida: op.criterioSaida,
+    status: forcarEncerramento ? "Encerrada" : op.status,
+    resultado: op.resultado ?? (forcarEncerramento ? "Green" : null),
+    lucro: op.lucro ?? (forcarEncerramento ? 0 : null),
     observacoes: op.observacoes,
   };
 }

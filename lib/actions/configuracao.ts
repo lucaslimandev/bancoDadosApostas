@@ -9,11 +9,12 @@ export async function getConfiguracao() {
   if (existente) return existente;
   return prisma.configuracao.create({
     data: {
-      bancaInicial: 100,
-      valorUnidade: 50,
-      stopLossDiario: 5,
-      stopGainDiario: 8,
-      stakePadraoPercent: 2,
+      bancaInicial: 1000,
+      stakeModo: "Percentual",
+      stakeValor: 50,
+      stakePercentual: 2,
+      stopLossDiario: 50,
+      stopGainDiario: 80,
       maxOperacoesSimultaneas: 2,
       tema: "dark",
     },
@@ -45,10 +46,20 @@ export async function restaurarDadosDeExemplo() {
   const { METODOS_SEED, LIGAS_SEED, TIMES_SEED } = await import("@/lib/seed-catalogs");
 
   for (const m of METODOS_SEED) {
+    const dadosMetodo = {
+      cor: m.cor,
+      descricao: m.descricao,
+      usaBack: m.usaBack ?? true,
+      usaLay: m.usaLay ?? true,
+      stakesBack: m.stakesBack ?? 1,
+      stakesLay: m.stakesLay ?? 1,
+      criterioEntradaPadrao: m.criterioEntradaPadrao,
+      criterioSaidaPadrao: m.criterioSaidaPadrao,
+    };
     await prisma.metodo.upsert({
       where: { nome: m.nome },
-      update: { cor: m.cor, descricao: m.descricao },
-      create: { nome: m.nome, cor: m.cor, descricao: m.descricao },
+      update: dadosMetodo,
+      create: { nome: m.nome, ...dadosMetodo },
     });
   }
   for (const l of LIGAS_SEED) {

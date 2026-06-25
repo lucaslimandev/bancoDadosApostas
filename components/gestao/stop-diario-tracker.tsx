@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { cn, formatU } from "@/lib/utils";
+import { cn, formatBRLSinal } from "@/lib/utils";
 import { Gauge, AlertOctagon, PartyPopper } from "lucide-react";
 
 export function StopDiarioTracker({
@@ -32,13 +32,13 @@ export function StopDiarioTracker({
         <div className="text-center">
           <p className="text-[11px] text-muted-foreground">Lucro acumulado hoje</p>
           <p className={cn("text-3xl font-semibold tabular-nums", lucroHoje > 0 && "text-profit", lucroHoje < 0 && "text-loss")}>
-            {formatU(lucroHoje, 2)}
+            {formatBRLSinal(lucroHoje)}
           </p>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Stop loss ({formatU(-stopLossDiario, 1)})</span>
+            <span>Stop loss ({formatBRLSinal(-stopLossDiario)})</span>
             <span>{progressoPerda.toFixed(0)}%</span>
           </div>
           <Progress value={progressoPerda} className="[&_[data-slot=progress-indicator]]:bg-loss" />
@@ -46,7 +46,7 @@ export function StopDiarioTracker({
 
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Stop gain ({formatU(stopGainDiario, 1)})</span>
+            <span>Stop gain ({formatBRLSinal(stopGainDiario)})</span>
             <span>{progressoGanho.toFixed(0)}%</span>
           </div>
           <Progress value={progressoGanho} className="[&_[data-slot=progress-indicator]]:bg-profit" />

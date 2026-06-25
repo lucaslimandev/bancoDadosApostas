@@ -47,10 +47,16 @@ const COLUNAS_OPERACAO = [
   "metodoNome",
   "tipo",
   "momento",
+  "fase",
+  "minutoEntrada",
+  "periodo",
   "oddEntrada",
   "oddSaida",
   "stake",
   "responsabilidade",
+  "criterioEntrada",
+  "criterioSaida",
+  "status",
   "resultado",
   "lucro",
   "observacoes",
@@ -65,12 +71,18 @@ export type OperacaoImportRow = {
   metodoNome: string;
   tipo: "Lay" | "Back" | "Trade";
   momento: string;
+  fase: "PreJogo" | "AoVivo";
+  minutoEntrada?: number | null;
+  periodo?: string | null;
   oddEntrada: number;
   oddSaida?: number | null;
   stake: number;
   responsabilidade?: number | null;
-  resultado: "Green" | "Red" | "Anulado";
-  lucro: number;
+  criterioEntrada?: string | null;
+  criterioSaida?: string | null;
+  status: "Aberta" | "Encerrada";
+  resultado?: "Green" | "Red" | "Anulado" | null;
+  lucro?: number | null;
   observacoes?: string | null;
 };
 
@@ -84,12 +96,18 @@ export function exportarOperacoesCSV(operacoes: Operacao[]) {
     metodoNome: op.metodo.nome,
     tipo: op.tipo,
     momento: op.momento,
+    fase: op.fase,
+    minutoEntrada: op.minutoEntrada ?? "",
+    periodo: op.periodo ?? "",
     oddEntrada: op.oddEntrada,
     oddSaida: op.oddSaida ?? "",
     stake: op.stake,
     responsabilidade: op.responsabilidade ?? "",
-    resultado: op.resultado,
-    lucro: op.lucro,
+    criterioEntrada: op.criterioEntrada ?? "",
+    criterioSaida: op.criterioSaida ?? "",
+    status: op.status,
+    resultado: op.resultado ?? "",
+    lucro: op.lucro ?? "",
     observacoes: op.observacoes ?? "",
   }));
   const csv = Papa.unparse({ fields: [...COLUNAS_OPERACAO], data: linhas });
@@ -109,13 +127,19 @@ export async function importarArquivoOperacoes(file: File): Promise<OperacaoImpo
     mercado: String(linha.mercado ?? ""),
     metodoNome: String(linha.metodoNome ?? linha.metodo ?? ""),
     tipo: (linha.tipo as OperacaoImportRow["tipo"]) ?? "Back",
-    momento: String(linha.momento ?? ""),
+    momento: String(linha.momento ?? (linha.fase === "AoVivo" ? "Ao vivo" : "Pré-jogo")),
+    fase: (linha.fase as OperacaoImportRow["fase"]) ?? "PreJogo",
+    minutoEntrada: linha.minutoEntrada ? Number(linha.minutoEntrada) : null,
+    periodo: linha.periodo ? String(linha.periodo) : null,
     oddEntrada: Number(linha.oddEntrada),
     oddSaida: linha.oddSaida ? Number(linha.oddSaida) : null,
     stake: Number(linha.stake),
     responsabilidade: linha.responsabilidade ? Number(linha.responsabilidade) : null,
-    resultado: (linha.resultado as OperacaoImportRow["resultado"]) ?? "Anulado",
-    lucro: Number(linha.lucro) || 0,
+    criterioEntrada: linha.criterioEntrada ? String(linha.criterioEntrada) : null,
+    criterioSaida: linha.criterioSaida ? String(linha.criterioSaida) : null,
+    status: (linha.status as OperacaoImportRow["status"]) ?? (linha.resultado ? "Encerrada" : "Aberta"),
+    resultado: linha.resultado ? (linha.resultado as OperacaoImportRow["resultado"]) : null,
+    lucro: linha.lucro !== undefined && linha.lucro !== "" ? Number(linha.lucro) : null,
     observacoes: linha.observacoes ? String(linha.observacoes) : null,
   }));
 }

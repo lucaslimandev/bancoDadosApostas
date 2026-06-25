@@ -4,6 +4,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { SeriePonto } from "@/lib/calculations";
+import { formatBRL } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function BancaChart({ serie }: { serie: SeriePonto[] }) {
@@ -15,7 +16,7 @@ export function BancaChart({ serie }: { serie: SeriePonto[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">Evolução da banca (u)</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">Evolução da banca (R$)</CardTitle>
       </CardHeader>
       <CardContent className="h-64">
         {dados.length === 0 ? (
@@ -34,7 +35,7 @@ export function BancaChart({ serie }: { serie: SeriePonto[] }) {
               <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} width={40} />
               <Tooltip
                 contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
-                formatter={(v) => [`${Number(v).toFixed(2)}u`, "Banca"]}
+                formatter={(v) => [formatBRL(Number(v)), "Banca"]}
               />
               <Area type="monotone" dataKey="banca" stroke="var(--color-gold)" strokeWidth={2} fill="url(#bancaGradient)" />
             </AreaChart>

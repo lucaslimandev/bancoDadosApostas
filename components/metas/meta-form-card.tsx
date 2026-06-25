@@ -11,18 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { cn, formatU } from "@/lib/utils";
+import { cn, formatBRLSinal } from "@/lib/utils";
 import { Target } from "lucide-react";
 
 export function MetaFormCard({
   mes,
-  metaLucroUnidades: metaLucroInicial,
+  metaLucro: metaLucroInicial,
   metaOperacoes: metaOperacoesInicial,
   lucroRealizado,
   operacoesRealizadas,
 }: {
   mes: string;
-  metaLucroUnidades: number;
+  metaLucro: number;
   metaOperacoes: number;
   lucroRealizado: number;
   operacoesRealizadas: number;
@@ -38,7 +38,7 @@ export function MetaFormCard({
   async function handleSalvar() {
     setSalvando(true);
     try {
-      await salvarMeta({ mes, metaLucroUnidades: metaLucro, metaOperacoes });
+      await salvarMeta({ mes, metaLucro, metaOperacoes });
       toast.success("Meta atualizada.");
       router.refresh();
     } catch (e) {
@@ -61,8 +61,8 @@ export function MetaFormCard({
       <CardContent className="space-y-5">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs">Meta de lucro (u)</Label>
-            <Input type="number" step="0.5" value={metaLucro} onChange={(e) => setMetaLucro(Number(e.target.value) || 0)} />
+            <Label className="text-xs">Meta de lucro (R$)</Label>
+            <Input type="number" step="10" value={metaLucro} onChange={(e) => setMetaLucro(Number(e.target.value) || 0)} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Meta de operações</Label>
@@ -84,7 +84,7 @@ export function MetaFormCard({
             <div className="flex justify-between text-xs mb-1">
               <span className="text-muted-foreground">Lucro realizado</span>
               <span className={cn("font-medium", lucroRealizado >= 0 ? "text-profit" : "text-loss")}>
-                {formatU(lucroRealizado, 1)} / {formatU(metaLucro, 1)}
+                {formatBRLSinal(lucroRealizado)} / {formatBRLSinal(metaLucro)}
               </span>
             </div>
             <Progress value={progressoLucro} className="[&_[data-slot=progress-indicator]]:bg-gold" />

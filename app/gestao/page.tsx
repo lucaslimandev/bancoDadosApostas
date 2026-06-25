@@ -14,7 +14,7 @@ export default async function GestaoPage() {
   const hoje = diaKey(new Date());
   const lucroHoje = operacoes
     .filter((op) => diaKey(new Date(op.data)) === hoje)
-    .reduce((acc, op) => acc + op.lucro, 0);
+    .reduce((acc, op) => acc + (op.lucro ?? 0), 0);
 
   return (
     <div>
@@ -25,7 +25,7 @@ export default async function GestaoPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="space-y-4">
-          <StakeCalculator bancaAtualU={metricas.bancaAtual} valorUnidade={configuracao.valorUnidade} />
+          <StakeCalculator bancaAtual={metricas.bancaAtual} />
           <StopDiarioTracker
             lucroHoje={lucroHoje}
             stopLossDiario={configuracao.stopLossDiario}

@@ -1,12 +1,57 @@
-export type MetodoSeed = { nome: string; descricao?: string; cor: string };
+export type MetodoSeed = {
+  nome: string;
+  descricao?: string;
+  cor: string;
+  usaBack?: boolean;
+  usaLay?: boolean;
+  stakesBack?: number;
+  stakesLay?: number;
+  criterioEntradaPadrao?: string;
+  criterioSaidaPadrao?: string;
+};
 export type LigaSeed = { nome: string; pais: string; tipo: "Liga" | "Copa" | "Continental" | "Selecoes"; nivel?: string };
 export type TimeSeed = { nome: string; ligaNome: string; pais?: string; abreviacao?: string };
 
 export const METODOS_SEED: MetodoSeed[] = [
-  { nome: "Pressão Reversa", cor: "#3b82f6", descricao: "Entrada contra o favorito sob pressão do azarão." },
-  { nome: "Scalping Ao Vivo", cor: "#a855f7", descricao: "Entradas e saídas rápidas explorando variação de odd ao vivo." },
-  { nome: "Lay Empate", cor: "#f59e0b", descricao: "Lay no empate pré-jogo ou no início da partida." },
-  { nome: "Cash Out Verde", cor: "#22c55e", descricao: "Trade para travar lucro com cash out manual." },
+  {
+    nome: "Pressão Reversa",
+    cor: "#3b82f6",
+    descricao: "Entrada contra o favorito sob pressão do azarão.",
+    usaBack: true,
+    usaLay: false,
+    stakesBack: 1.5,
+    criterioEntradaPadrao: "Favorito com odd inflada por jogo fora de casa",
+  },
+  {
+    nome: "Scalping Ao Vivo",
+    cor: "#a855f7",
+    descricao: "Entradas e saídas rápidas explorando variação de odd ao vivo.",
+    usaBack: true,
+    usaLay: true,
+    stakesBack: 1,
+    stakesLay: 1,
+    criterioEntradaPadrao: "Movimento de odd após pressão ofensiva clara",
+  },
+  {
+    nome: "Lay Empate",
+    cor: "#f59e0b",
+    descricao: "Lay no empate pré-jogo ou no início da partida.",
+    usaBack: false,
+    usaLay: true,
+    stakesLay: 1,
+    criterioEntradaPadrao: "Empate sobrevalorizado pré-jogo, equipes com tendência ofensiva",
+  },
+  {
+    nome: "Cash Out Verde",
+    cor: "#22c55e",
+    descricao: "Trade para travar lucro com cash out manual.",
+    usaBack: true,
+    usaLay: true,
+    stakesBack: 1.5,
+    stakesLay: 1.5,
+    criterioEntradaPadrao: "Gol cedo travou vantagem, saída programada na variação de odd",
+    criterioSaidaPadrao: "Variação de odd favorável, lucro travado via cash out",
+  },
 ];
 
 export const LIGAS_SEED: LigaSeed[] = [

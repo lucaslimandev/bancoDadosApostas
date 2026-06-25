@@ -1,8 +1,20 @@
-export const MOMENTOS_SUGERIDOS = ["Pré-jogo", "1ºT", "Intervalo", "2ºT", "Acréscimos"] as const;
-
 export const TIPOS_OPERACAO = ["Lay", "Back", "Trade"] as const;
 
 export const RESULTADOS_OPERACAO = ["Green", "Red", "Anulado"] as const;
+
+export const FASES_OPERACAO = ["PreJogo", "AoVivo"] as const;
+
+export const FASE_OPERACAO_LABEL: Record<string, string> = {
+  PreJogo: "Pré-jogo",
+  AoVivo: "Ao vivo",
+};
+
+export const STATUS_OPERACAO_LABEL: Record<string, string> = {
+  Aberta: "Aberta",
+  Encerrada: "Encerrada",
+};
+
+export const PERIODOS_SUGERIDOS = ["1ºT", "Intervalo", "2ºT", "Prorrogação"] as const;
 
 export const REGRAS_OURO_PADRAO = [
   "Stake entre 1% e 3% da banca por operação",

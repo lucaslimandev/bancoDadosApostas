@@ -6,7 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { operacaoSchema, type OperacaoFormValues } from "@/lib/schemas";
 import { calcResponsabilidade, calcLucroSugerido } from "@/lib/calculations";
-import { MOMENTOS_SUGERIDOS, TIPOS_OPERACAO, RESULTADOS_OPERACAO } from "@/lib/constants";
+import { calcStakeMetodo } from "@/lib/stake";
+import { TIPOS_OPERACAO, RESULTADOS_OPERACAO, PERIODOS_SUGERIDOS } from "@/lib/constants";
+import { formatMomento, formatBRL } from "@/lib/utils";
 import type { Liga, Metodo, Time } from "@/lib/types";
 import { criarLiga } from "@/lib/actions/ligas";
 import { criarMetodo } from "@/lib/actions/metodos";
@@ -16,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Combobox } from "@/components/ui/combobox";
 import { Wand2 } from "lucide-react";
 
@@ -25,6 +28,7 @@ export type OperacaoFormProps = {
   ligas: Liga[];
   metodos: Metodo[];
   times: Time[];
+  valorStakeFixa: number;
   defaultValues?: Partial<OperacaoFormValues>;
   onSubmit: (values: OperacaoFormValues) => Promise<void> | void;
   onCancel?: () => void;
@@ -36,6 +40,7 @@ export function OperacaoForm({
   ligas,
   metodos,
   times,
+  valorStakeFixa,
   defaultValues,
   onSubmit,
   onCancel,
@@ -47,7 +52,7 @@ export function OperacaoForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<OperacaoFormValues>({
     resolver: zodResolver(operacaoSchema),
     defaultValues: {
@@ -59,10 +64,16 @@ export function OperacaoForm({
       metodoId: metodos[0]?.id ?? "",
       tipo: "Lay",
       momento: "Pré-jogo",
+      fase: "PreJogo",
+      minutoEntrada: null,
+      periodo: null,
       oddEntrada: 2,
       oddSaida: undefined,
-      stake: 4,
+      stake: 0,
       responsabilidade: undefined,
+      criterioEntrada: "",
+      criterioSaida: "",
+      status: "Encerrada",
       resultado: "Green",
       lucro: 0,
       observacoes: "",
@@ -71,6 +82,10 @@ export function OperacaoForm({
   });
 
   const tipo = watch("tipo");
+  const fase = watch("fase");
+  const minutoEntrada = watch("minutoEntrada");
+  const periodo = watch("periodo");
+  const status = watch("status");
   const resultado = watch("resultado");
   const oddEntrada = watch("oddEntrada");
   const oddSaida = watch("oddSaida");
@@ -80,6 +95,38 @@ export function OperacaoForm({
   const timeCasaId = watch("timeCasaId");
   const timeForaId = watch("timeForaId");
 
+  const metodoSelecionado = useMemo(() => metodos.find((m) => m.id === metodoId), [metodos, metodoId]);
+
+  // mantém o campo de exibição amigável (momento) sincronizado com fase/minuto/período
+  useEffect(() => {
+    setValue("momento", formatMomento(fase, minutoEntrada, periodo));
+  }, [fase, minutoEntrada, periodo, setValue]);
+
+  useEffect(() => {
+    if (fase === "PreJogo") {
+      setValue("minutoEntrada", null);
+      setValue("periodo", null);
+    }
+  }, [fase, setValue]);
+
+  // pré-preenche a stake (em R$) a partir das stakes configuradas no método + tipo, salvo edição manual
+  useEffect(() => {
+    if (dirtyFields.stake) return;
+    const sugerida = calcStakeMetodo(metodoSelecionado, tipo, valorStakeFixa);
+    if (sugerida !== null) setValue("stake", sugerida);
+  }, [metodoSelecionado, tipo, valorStakeFixa, dirtyFields.stake, setValue]);
+
+  // pré-preenche o critério de entrada a partir do padrão do método, salvo edição manual
+  useEffect(() => {
+    if (dirtyFields.criterioEntrada) return;
+    if (metodoSelecionado?.criterioEntradaPadrao) setValue("criterioEntrada", metodoSelecionado.criterioEntradaPadrao);
+  }, [metodoSelecionado, dirtyFields.criterioEntrada, setValue]);
+
+  useEffect(() => {
+    if (status !== "Encerrada" || dirtyFields.criterioSaida) return;
+    if (metodoSelecionado?.criterioSaidaPadrao) setValue("criterioSaida", metodoSelecionado.criterioSaidaPadrao);
+  }, [status, metodoSelecionado, dirtyFields.criterioSaida, setValue]);
+
   useEffect(() => {
     if (tipo === "Lay" && oddEntrada > 0 && stake > 0) {
       setValue("responsabilidade", calcResponsabilidade(Number(stake), Number(oddEntrada)));
@@ -87,6 +134,7 @@ export function OperacaoForm({
   }, [tipo, oddEntrada, stake, setValue]);
 
   function aplicarLucroSugerido() {
+    if (!resultado) return;
     const sugerido = calcLucroSugerido({
       tipo,
       resultado,
@@ -120,6 +168,41 @@ export function OperacaoForm({
           />
           {errors.data && <p className="text-xs text-destructive">{String(errors.data.message)}</p>}
         </div>
+
+        <div className="space-y-1.5 col-span-2">
+          <Label>Fase da entrada</Label>
+          <Tabs value={fase} onValueChange={(v) => setValue("fase", v as OperacaoFormValues["fase"])}>
+            <TabsList className="w-full">
+              <TabsTrigger value="PreJogo" className="flex-1">Pré-jogo</TabsTrigger>
+              <TabsTrigger value="AoVivo" className="flex-1">Ao vivo</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {fase === "AoVivo" && (
+          <>
+            <div className="space-y-1.5">
+              <Label>Minuto da entrada</Label>
+              <Input
+                type="number"
+                min={0}
+                max={130}
+                {...register("minutoEntrada", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
+                placeholder="Ex.: 35"
+              />
+              {errors.minutoEntrada && <p className="text-xs text-destructive">{errors.minutoEntrada.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Período</Label>
+              <Input list="periodos-sugeridos" {...register("periodo")} placeholder="Ex.: 1ºT" />
+              <datalist id="periodos-sugeridos">
+                {PERIODOS_SUGERIDOS.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+            </div>
+          </>
+        )}
 
         <div className="space-y-1.5 col-span-2">
           <Label>Liga</Label>
@@ -184,22 +267,22 @@ export function OperacaoForm({
             placeholder="Selecione o método"
             searchPlaceholder="Buscar método..."
             onCreateNew={async (texto) => {
-              const novo = await criarMetodo({ nome: texto, descricao: null, cor: "#64748b", ativo: true });
+              const novo = await criarMetodo({
+                nome: texto,
+                descricao: null,
+                cor: "#64748b",
+                ativo: true,
+                usaBack: true,
+                usaLay: true,
+                stakesBack: 1,
+                stakesLay: 1,
+                criterioEntradaPadrao: null,
+                criterioSaidaPadrao: null,
+              });
               return { value: novo.id, label: novo.nome };
             }}
           />
           {errors.metodoId && <p className="text-xs text-destructive">{errors.metodoId.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Momento</Label>
-          <Input list="momentos-sugeridos" {...register("momento")} placeholder="Ex.: Pré-jogo" />
-          <datalist id="momentos-sugeridos">
-            {MOMENTOS_SUGERIDOS.map((m) => (
-              <option key={m} value={m} />
-            ))}
-          </datalist>
-          {errors.momento && <p className="text-xs text-destructive">{errors.momento.message}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -219,29 +302,13 @@ export function OperacaoForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label>Resultado</Label>
-          <Select value={resultado} onValueChange={(v) => setValue("resultado", v as OperacaoFormValues["resultado"])}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RESULTADOS_OPERACAO.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
           <Label>Odd de entrada</Label>
           <Input type="number" step="0.01" {...register("oddEntrada", { valueAsNumber: true })} />
           {errors.oddEntrada && <p className="text-xs text-destructive">{errors.oddEntrada.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Odd de saída {tipo !== "Trade" && <span className="text-muted-foreground">(opcional)</span>}</Label>
+          <Label>Odd de saída <span className="text-muted-foreground">(opcional)</span></Label>
           <Input
             type="number"
             step="0.01"
@@ -250,14 +317,17 @@ export function OperacaoForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label>Stake (u)</Label>
-          <Input type="number" step="0.1" {...register("stake", { valueAsNumber: true })} />
+          <Label>Stake (R$)</Label>
+          <Input type="number" step="0.01" {...register("stake", { valueAsNumber: true })} />
           {errors.stake && <p className="text-xs text-destructive">{errors.stake.message}</p>}
+          {metodoSelecionado && !dirtyFields.stake && (
+            <p className="text-[11px] text-muted-foreground">Pré-preenchida pelo método ({formatBRL(valorStakeFixa)} = 1 stake)</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label>
-            Responsabilidade (u) {tipo === "Lay" && <span className="text-muted-foreground">(auto)</span>}
+            Responsabilidade (R$) {tipo === "Lay" && <span className="text-muted-foreground">(auto)</span>}
           </Label>
           <Input
             type="number"
@@ -268,16 +338,66 @@ export function OperacaoForm({
         </div>
 
         <div className="space-y-1.5 col-span-2">
-          <div className="flex items-center justify-between">
-            <Label>Lucro (u)</Label>
-            <Button type="button" variant="ghost" size="xs" onClick={aplicarLucroSugerido} className="gap-1 text-muted-foreground">
-              <Wand2 className="size-3" />
-              Sugerir lucro
-            </Button>
-          </div>
-          <Input type="number" step="0.01" {...register("lucro", { valueAsNumber: true })} />
-          {errors.lucro && <p className="text-xs text-destructive">{errors.lucro.message}</p>}
+          <Label>Critério de entrada</Label>
+          <Textarea rows={2} {...register("criterioEntrada")} placeholder="O que motivou a entrada" />
         </div>
+
+        <div className="space-y-1.5 col-span-2">
+          <Label>Status da operação</Label>
+          <Tabs value={status} onValueChange={(v) => setValue("status", v as OperacaoFormValues["status"])}>
+            <TabsList className="w-full">
+              <TabsTrigger value="Aberta" className="flex-1">Aberta (em andamento)</TabsTrigger>
+              <TabsTrigger value="Encerrada" className="flex-1">Encerrada</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {status === "Aberta" && (
+            <p className="text-[11px] text-muted-foreground">
+              A operação ficará marcada como em andamento. Edite-a depois para encerrar com o resultado final.
+            </p>
+          )}
+        </div>
+
+        {status === "Encerrada" && (
+          <>
+            <div className="space-y-1.5">
+              <Label>Resultado</Label>
+              <Select value={resultado ?? undefined} onValueChange={(v) => setValue("resultado", v as OperacaoFormValues["resultado"])}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESULTADOS_OPERACAO.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.resultado && <p className="text-xs text-destructive">{errors.resultado.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label>Lucro (R$)</Label>
+                <Button type="button" variant="ghost" size="xs" onClick={aplicarLucroSugerido} className="gap-1 text-muted-foreground">
+                  <Wand2 className="size-3" />
+                  Sugerir
+                </Button>
+              </div>
+              <Input
+                type="number"
+                step="0.01"
+                {...register("lucro", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
+              />
+              {errors.lucro && <p className="text-xs text-destructive">{errors.lucro.message}</p>}
+            </div>
+
+            <div className="space-y-1.5 col-span-2">
+              <Label>Critério de saída</Label>
+              <Textarea rows={2} {...register("criterioSaida")} placeholder="Como/por que saiu da operação" />
+            </div>
+          </>
+        )}
 
         <div className="space-y-1.5 col-span-2">
           <Label>Observações</Label>

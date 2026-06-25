@@ -10,8 +10,8 @@ import { Calculator, AlertTriangle } from "lucide-react";
 
 const LIMITE_RISCO_PERCENT = 5;
 
-export function StakeCalculator({ bancaAtualU, valorUnidade }: { bancaAtualU: number; valorUnidade: number }) {
-  const [banca, setBanca] = useState(bancaAtualU);
+export function StakeCalculator({ bancaAtual }: { bancaAtual: number }) {
+  const [banca, setBanca] = useState(bancaAtual);
   const [stakePercent, setStakePercent] = useState(2);
   const [oddLay, setOddLay] = useState(3.0);
 
@@ -35,8 +35,8 @@ export function StakeCalculator({ bancaAtualU, valorUnidade }: { bancaAtualU: nu
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs">Banca atual (u)</Label>
-            <Input type="number" step="0.1" value={banca} onChange={(e) => setBanca(Number(e.target.value) || 0)} />
+            <Label className="text-xs">Banca atual (R$)</Label>
+            <Input type="number" step="1" value={banca} onChange={(e) => setBanca(Number(e.target.value) || 0)} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Stake (%)</Label>
@@ -54,8 +54,8 @@ export function StakeCalculator({ bancaAtualU, valorUnidade }: { bancaAtualU: nu
         </div>
 
         <div className="grid grid-cols-3 gap-3 pt-2 border-t">
-          <Resultado label="Stake recomendada" valor={`${stakeRecomendada.toFixed(2)}u`} sub={formatBRL(stakeRecomendada * valorUnidade)} />
-          <Resultado label="Responsabilidade" valor={`${responsabilidade.toFixed(2)}u`} sub={formatBRL(responsabilidade * valorUnidade)} />
+          <Resultado label="Stake recomendada" valor={formatBRL(stakeRecomendada)} />
+          <Resultado label="Responsabilidade" valor={formatBRL(responsabilidade)} />
           <Resultado
             label="% da banca em risco"
             valor={`${riscoPercent.toFixed(1)}%`}
@@ -77,12 +77,10 @@ export function StakeCalculator({ bancaAtualU, valorUnidade }: { bancaAtualU: nu
 function Resultado({
   label,
   valor,
-  sub,
   tone,
 }: {
   label: string;
   valor: string;
-  sub?: string;
   tone?: "profit" | "loss";
 }) {
   return (
@@ -91,7 +89,6 @@ function Resultado({
       <p className={cn("text-lg font-semibold tabular-nums", tone === "profit" && "text-profit", tone === "loss" && "text-loss")}>
         {valor}
       </p>
-      {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
     </div>
   );
 }

@@ -1,15 +1,16 @@
-// Prisma schema — Gestão de Trading Esportivo (SQLite, usado em desenvolvimento local)
+// Prisma schema — Gestão de Trading Esportivo (variante Postgres para produção)
 //
-// Existe uma variante para produção em prisma/schema.postgresql.prisma (idêntica, exceto o
-// datasource), selecionada automaticamente pelo prisma.config.ts quando DATABASE_URL começa
-// com "postgres". Ao alterar modelos aqui, replique a mudança no outro arquivo.
+// Espelha prisma/schema.prisma (SQLite, usado em desenvolvimento local) — os modelos devem
+// ser mantidos idênticos nos dois arquivos. Só o datasource difere. Selecionado automaticamente
+// pelo prisma.config.ts quando DATABASE_URL começa com "postgres". Veja o README (seção Deploy)
+// para o passo a passo de uso na Vercel + Postgres/Neon.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum TipoOperacao {

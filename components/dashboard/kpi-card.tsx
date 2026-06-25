@@ -4,25 +4,25 @@ import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import { cn, formatBRL } from "@/lib/utils";
+import { cn, formatBRL, formatBRLSinal, formatPercent } from "@/lib/utils";
 
 export function KpiCard({
   titulo,
-  valorU,
-  valorEmDinheiro = true,
-  valorUnidade,
-  sufixo = "u",
+  valor,
+  formato = "numero",
+  sufixo = "",
   decimais = 1,
+  subtitulo,
   tendencia,
   icon: Icon,
   tone = "neutral",
 }: {
   titulo: string;
-  valorU: number;
-  valorEmDinheiro?: boolean;
-  valorUnidade: number;
+  valor: number;
+  formato?: "moeda" | "moedaSinal" | "percent" | "numero";
   sufixo?: string;
   decimais?: number;
+  subtitulo?: string;
   tendencia?: "up" | "down" | "flat";
   icon: LucideIcon;
   tone?: "profit" | "loss" | "neutral" | "gold";
@@ -37,6 +37,15 @@ export function KpiCard({
   const TrendIcon = tendencia === "up" ? ArrowUpRight : tendencia === "down" ? ArrowDownRight : Minus;
   const trendClass =
     tendencia === "up" ? "text-profit" : tendencia === "down" ? "text-loss" : "text-muted-foreground";
+
+  const format =
+    formato === "moeda"
+      ? formatBRL
+      : formato === "moedaSinal"
+        ? formatBRLSinal
+        : formato === "percent"
+          ? (v: number) => formatPercent(v, decimais)
+          : undefined;
 
   return (
     <motion.div
@@ -54,13 +63,11 @@ export function KpiCard({
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-semibold tabular-nums tracking-tight">
-              <AnimatedNumber value={valorU} decimals={decimais} suffix={sufixo} />
+              <AnimatedNumber value={valor} decimals={decimais} suffix={sufixo} format={format} />
             </span>
             {tendencia && <TrendIcon className={cn("size-4", trendClass)} />}
           </div>
-          {valorEmDinheiro && (
-            <span className="text-xs text-muted-foreground">{formatBRL(valorU * valorUnidade)}</span>
-          )}
+          {subtitulo && <span className="text-xs text-muted-foreground">{subtitulo}</span>}
         </CardContent>
       </Card>
     </motion.div>
