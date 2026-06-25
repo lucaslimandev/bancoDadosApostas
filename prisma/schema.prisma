@@ -1,0 +1,66 @@
+// Prisma schema — Gestão de Trading Esportivo
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum TipoOperacao {
+  Lay
+  Back
+  Trade
+}
+
+enum ResultadoOperacao {
+  Green
+  Red
+  Anulado
+}
+
+model Operacao {
+  id              String            @id @default(cuid())
+  data            DateTime
+  liga            String
+  timeCasa        String
+  timeFora        String
+  mercado         String
+  metodo          String
+  tipo            TipoOperacao
+  momento         String
+  oddEntrada      Float
+  oddSaida        Float?
+  stake           Float
+  responsabilidade Float?
+  resultado       ResultadoOperacao
+  lucro           Float
+  observacoes     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([data])
+  @@index([liga])
+  @@index([metodo])
+  @@index([tipo])
+}
+
+model Configuracao {
+  id                      Int      @id @default(autoincrement())
+  bancaInicial            Float    @default(100)
+  valorUnidade            Float    @default(50)
+  stopLossDiario          Float    @default(5)
+  stopGainDiario          Float    @default(8)
+  stakePadraoPercent      Float    @default(2)
+  maxOperacoesSimultaneas Int      @default(2)
+  tema                    String   @default("dark")
+  updatedAt               DateTime @updatedAt
+}
+
+model Meta {
+  id                Int    @id @default(autoincrement())
+  mes               String @unique // YYYY-MM
+  metaLucroUnidades Float
+  metaOperacoes     Int
+}
