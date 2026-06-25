@@ -7,16 +7,28 @@ onde 1u corresponde a um valor fixo em dinheiro definido nas configurações.
 ## Funcionalidades
 
 - **Dashboard**: KPIs animados (lucro total, ROI, yield, taxa de acerto, banca atual, drawdown máximo, streak),
-  gráficos de evolução da banca, drawdown, lucro por método/liga e distribuição por tipo, com filtros globais.
+  gráficos de evolução da banca, drawdown, lucro por método (com a cor cadastrada de cada método)/liga e
+  distribuição por tipo, com filtros globais combináveis por período, liga, método, time e tipo.
 - **Calendário**: visão mensal com heatmap de lucro diário, badges de stop loss/gain batido, painel lateral com
-  detalhes das operações do dia e atalho para registrar uma nova operação direto na data, além de visão em lista.
-- **Operações**: CRUD completo com tabela ordenável/filtrável/paginável, formulário com cálculo automático de
-  responsabilidade (lay) e lucro sugerido, duplicação, exclusão com confirmação e exportação/importação em CSV/JSON.
+  detalhes das operações do dia e atalho para registrar uma nova operação direto na data, visão em lista e os
+  mesmos filtros globais (liga/método/time/tipo).
+- **Operações**: CRUD completo com tabela ordenável/filtrável/paginável, seleção em massa (checkbox por linha e
+  "selecionar todos" respeitando os filtros ativos) com exclusão e exportação em massa, formulário com selects
+  relacionais (liga/método/times) com busca e criação inline, cálculo automático de responsabilidade (lay) e
+  lucro sugerido, duplicação e exportação/importação em CSV/JSON.
+- **Métodos**: cadastro de métodos (nome, descrição, cor, ativo/inativo) usados nas operações e nos gráficos.
+- **Ligas**: cadastro de ligas, copas, competições continentais e de seleções (nome, país, tipo, nível), com
+  importação via CSV/JSON e seed inicial com as principais ligas e competições do mundo.
+- **Times**: cadastro de times vinculados a uma liga, com importação via CSV/JSON (criando a liga automaticamente
+  quando necessário) e seed inicial com clubes das principais ligas.
 - **Gestão de Banca & Regras**: calculadora de stake/responsabilidade/risco, lista editável de regras de ouro e
   tracker de stop diário com alertas visuais.
 - **Metas mensais**: definição de meta de lucro e de número de operações, com progresso e histórico mensal.
 - **Configurações**: parâmetros da banca (banca inicial, valor da unidade, stops diários, stake padrão, máx.
   operações simultâneas), alternância de tema claro/escuro, limpeza de dados e restauração dos dados de exemplo.
+
+Excluir um método, liga ou time que esteja em uso bloqueia a exclusão a menos que você reatribua as operações
+afetadas para outro item do mesmo tipo — nenhuma operação fica órfã.
 
 ## Stack
 
@@ -51,7 +63,7 @@ cp .env.example .env
 
 ```bash
 npm run db:migrate   # cria/atualiza o banco SQLite local (dev.db) a partir do schema do Prisma
-npm run db:seed       # popula o banco com configuração padrão, metas e ~16 operações de exemplo
+npm run db:seed       # popula configuração padrão, metas, catálogos (métodos/ligas/times) e ~16 operações de exemplo
 ```
 
 Outros comandos úteis do Prisma:
@@ -76,14 +88,41 @@ npm run build
 npm run start
 ```
 
+## Modelo de dados
+
+Além de `Operacao`, `Configuracao` e `Meta`, o schema inclui três entidades de catálogo, todas referenciadas por
+relação (não por texto solto) a partir de `Operacao`:
+
+- **Metodo**: `nome` (único), `descricao`, `cor` (hex), `ativo`.
+- **Liga**: `nome` (único), `pais`, `tipo` (`Liga` | `Copa` | `Continental` | `Selecoes`), `nivel`, `ativo`.
+- **Time**: `nome`, `pais`, `abreviacao`, `ligaId` (opcional), `ativo`.
+
+`Operacao.ligaId`, `metodoId`, `timeCasaId` e `timeForaId` são obrigatórios e protegidos contra exclusão em
+cascata (`onDelete: Restrict`/`SetNull`): a UI sempre conta o uso antes de excluir um item do catálogo e oferece
+reatribuir as operações afetadas para outro item, ou bloqueia a exclusão se não houver para onde reatribuir.
+
+## Importação via CSV/JSON
+
+Os botões "Importar" em Operações, Ligas e Times aceitam arquivos `.csv` (com cabeçalho) ou `.json` (array de
+objetos) com as colunas abaixo. Itens referenciados por nome que não existirem ainda são criados automaticamente
+(ligas/métodos/times), e linhas com nome já cadastrado são reportadas como ignoradas.
+
+**Operações** — `data, ligaNome, timeCasaNome, timeForaNome, mercado, metodoNome, tipo, momento, oddEntrada,
+oddSaida, stake, responsabilidade, resultado, lucro, observacoes`
+
+**Ligas** — `nome, pais, tipo, nivel` (tipo: `Liga` | `Copa` | `Continental` | `Selecoes`)
+
+**Times** — `nome, pais, liga, abreviacao` (a coluna `liga` é o nome da liga; se não existir, é criada)
+
 ## Estrutura do projeto
 
 ```
-app/                 rotas (App Router): dashboard, calendario, operacoes, gestao, metas, configuracoes
-components/          componentes de UI organizados por feature (dashboard, calendario, operacoes, gestao, metas,
-                     configuracoes, charts, layout) + components/ui (shadcn)
+app/                 rotas (App Router): dashboard, calendario, operacoes, metodos, ligas, times, gestao, metas,
+                     configuracoes
+components/          componentes de UI organizados por feature (dashboard, calendario, operacoes, metodos, ligas,
+                     times, catalogos, gestao, metas, configuracoes, charts, layout) + components/ui (shadcn)
 lib/                 lógica de domínio: cálculos (ROI, yield, drawdown, streaks), schemas Zod, server actions,
-                     stores Zustand, cliente Prisma e dados de seed
+                     stores Zustand, cliente Prisma e dados de seed/catálogo
 prisma/              schema.prisma e script de seed
 ```
 
