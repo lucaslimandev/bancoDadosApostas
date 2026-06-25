@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { TipoOperacao, ResultadoOperacao } from "@prisma/client";
 
 function diasAtras(n: number, hora = "16:30") {
   const d = new Date();
@@ -8,17 +8,33 @@ function diasAtras(n: number, hora = "16:30") {
   return d;
 }
 
-type OperacaoSeed = Omit<Prisma.OperacaoCreateInput, "id" | "createdAt" | "updatedAt">;
+export type OperacaoSeedNomes = {
+  data: Date;
+  ligaNome: string;
+  timeCasaNome: string;
+  timeForaNome: string;
+  mercado: string;
+  metodoNome: string;
+  tipo: TipoOperacao;
+  momento: string;
+  oddEntrada: number;
+  oddSaida?: number;
+  stake: number;
+  responsabilidade?: number;
+  resultado: ResultadoOperacao;
+  lucro: number;
+  observacoes?: string;
+};
 
-export function gerarOperacoesExemplo(): OperacaoSeed[] {
+export function gerarOperacoesExemplo(): OperacaoSeedNomes[] {
   return [
     {
       data: diasAtras(28),
-      liga: "Brasileirão Série A",
-      timeCasa: "Flamengo",
-      timeFora: "Palmeiras",
+      ligaNome: "Brasileirão Série A",
+      timeCasaNome: "Flamengo",
+      timeForaNome: "Palmeiras",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.4,
@@ -30,11 +46,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(27),
-      liga: "Premier League",
-      timeCasa: "Arsenal",
-      timeFora: "Chelsea",
+      ligaNome: "Premier League",
+      timeCasaNome: "Arsenal",
+      timeForaNome: "Chelsea",
       mercado: "Próximo Gol",
-      metodo: "Scalping Ao Vivo",
+      metodoNome: "Scalping Ao Vivo",
       tipo: "Trade",
       momento: "22' 1ºT",
       oddEntrada: 2.1,
@@ -46,11 +62,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(26),
-      liga: "La Liga",
-      timeCasa: "Real Madrid",
-      timeFora: "Sevilla",
+      ligaNome: "La Liga",
+      timeCasaNome: "Real Madrid",
+      timeForaNome: "Sevilla",
       mercado: "Over/Under 2.5",
-      metodo: "Pressão Reversa",
+      metodoNome: "Pressão Reversa",
       tipo: "Back",
       momento: "Pré-jogo",
       oddEntrada: 1.95,
@@ -60,11 +76,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(25),
-      liga: "Serie A",
-      timeCasa: "Inter",
-      timeFora: "Milan",
+      ligaNome: "Serie A",
+      timeCasaNome: "Inter",
+      timeForaNome: "Milan",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.2,
@@ -76,11 +92,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(24),
-      liga: "Bundesliga",
-      timeCasa: "Bayern de Munique",
-      timeFora: "Dortmund",
+      ligaNome: "Bundesliga",
+      timeCasaNome: "Bayern de Munique",
+      timeForaNome: "Dortmund",
       mercado: "Próximo Gol",
-      metodo: "Cash Out Verde",
+      metodoNome: "Cash Out Verde",
       tipo: "Trade",
       momento: "61' 2ºT",
       oddEntrada: 1.7,
@@ -91,11 +107,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(22),
-      liga: "Ligue 1",
-      timeCasa: "PSG",
-      timeFora: "Marselha",
+      ligaNome: "Ligue 1",
+      timeCasaNome: "PSG",
+      timeForaNome: "Marselha",
       mercado: "Handicap Asiático",
-      metodo: "Pressão Reversa",
+      metodoNome: "Pressão Reversa",
       tipo: "Back",
       momento: "Pré-jogo",
       oddEntrada: 1.88,
@@ -105,11 +121,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(20),
-      liga: "Brasileirão Série A",
-      timeCasa: "Corinthians",
-      timeFora: "São Paulo",
+      ligaNome: "Brasileirão Série A",
+      timeCasaNome: "Corinthians",
+      timeForaNome: "São Paulo",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.1,
@@ -120,11 +136,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(19),
-      liga: "Premier League",
-      timeCasa: "Man City",
-      timeFora: "Liverpool",
+      ligaNome: "Premier League",
+      timeCasaNome: "Man City",
+      timeForaNome: "Liverpool",
       mercado: "Próximo Gol",
-      metodo: "Scalping Ao Vivo",
+      metodoNome: "Scalping Ao Vivo",
       tipo: "Trade",
       momento: "10' 1ºT",
       oddEntrada: 2.5,
@@ -136,11 +152,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(17),
-      liga: "La Liga",
-      timeCasa: "Atlético de Madrid",
-      timeFora: "Barcelona",
+      ligaNome: "La Liga",
+      timeCasaNome: "Atlético de Madrid",
+      timeForaNome: "Barcelona",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.5,
@@ -151,11 +167,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(15),
-      liga: "Serie A",
-      timeCasa: "Juventus",
-      timeFora: "Napoli",
+      ligaNome: "Serie A",
+      timeCasaNome: "Juventus",
+      timeForaNome: "Napoli",
       mercado: "Over/Under 2.5",
-      metodo: "Pressão Reversa",
+      metodoNome: "Pressão Reversa",
       tipo: "Back",
       momento: "Pré-jogo",
       oddEntrada: 2.05,
@@ -166,11 +182,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(13),
-      liga: "Bundesliga",
-      timeCasa: "Leverkusen",
-      timeFora: "RB Leipzig",
+      ligaNome: "Bundesliga",
+      timeCasaNome: "Leverkusen",
+      timeForaNome: "RB Leipzig",
       mercado: "Próximo Gol",
-      metodo: "Cash Out Verde",
+      metodoNome: "Cash Out Verde",
       tipo: "Trade",
       momento: "75' 2ºT",
       oddEntrada: 1.6,
@@ -181,11 +197,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(11),
-      liga: "Brasileirão Série A",
-      timeCasa: "Grêmio",
-      timeFora: "Internacional",
+      ligaNome: "Brasileirão Série A",
+      timeCasaNome: "Grêmio",
+      timeForaNome: "Internacional",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.3,
@@ -196,11 +212,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(9),
-      liga: "Ligue 1",
-      timeCasa: "Lyon",
-      timeFora: "Monaco",
+      ligaNome: "Ligue 1",
+      timeCasaNome: "Lyon",
+      timeForaNome: "Monaco",
       mercado: "Handicap Asiático",
-      metodo: "Pressão Reversa",
+      metodoNome: "Pressão Reversa",
       tipo: "Back",
       momento: "Pré-jogo",
       oddEntrada: 1.92,
@@ -210,11 +226,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(6),
-      liga: "Premier League",
-      timeCasa: "Tottenham",
-      timeFora: "Newcastle",
+      ligaNome: "Premier League",
+      timeCasaNome: "Tottenham",
+      timeForaNome: "Newcastle",
       mercado: "Próximo Gol",
-      metodo: "Scalping Ao Vivo",
+      metodoNome: "Scalping Ao Vivo",
       tipo: "Trade",
       momento: "33' 1ºT",
       oddEntrada: 2.3,
@@ -225,11 +241,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(3),
-      liga: "La Liga",
-      timeCasa: "Valencia",
-      timeFora: "Betis",
+      ligaNome: "La Liga",
+      timeCasaNome: "Valencia",
+      timeForaNome: "Betis",
       mercado: "Resultado Final",
-      metodo: "Lay Empate",
+      metodoNome: "Lay Empate",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 3.15,
@@ -240,11 +256,11 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
     },
     {
       data: diasAtras(1),
-      liga: "Serie A",
-      timeCasa: "Roma",
-      timeFora: "Lazio",
+      ligaNome: "Serie A",
+      timeCasaNome: "Roma",
+      timeForaNome: "Lazio",
       mercado: "Próximo Gol",
-      metodo: "Cash Out Verde",
+      metodoNome: "Cash Out Verde",
       tipo: "Trade",
       momento: "55' 2ºT",
       oddEntrada: 1.75,
@@ -254,4 +270,46 @@ export function gerarOperacoesExemplo(): OperacaoSeed[] {
       lucro: 1.17,
     },
   ];
+}
+
+type ClientComCatalogos = {
+  liga: { findUnique: (args: { where: { nome: string } }) => Promise<{ id: string } | null> };
+  metodo: { findUnique: (args: { where: { nome: string } }) => Promise<{ id: string } | null> };
+  time: { findFirst: (args: { where: { nome: string; ligaId: string } }) => Promise<{ id: string } | null> };
+};
+
+export async function resolverOperacoesExemplo(prisma: ClientComCatalogos) {
+  const seeds = gerarOperacoesExemplo();
+  const resolvidas = [];
+
+  for (const seed of seeds) {
+    const liga = await prisma.liga.findUnique({ where: { nome: seed.ligaNome } });
+    const metodo = await prisma.metodo.findUnique({ where: { nome: seed.metodoNome } });
+    if (!liga) throw new Error(`Liga de seed não encontrada no catálogo: ${seed.ligaNome}`);
+    if (!metodo) throw new Error(`Método de seed não encontrado no catálogo: ${seed.metodoNome}`);
+    const timeCasa = await prisma.time.findFirst({ where: { nome: seed.timeCasaNome, ligaId: liga.id } });
+    const timeFora = await prisma.time.findFirst({ where: { nome: seed.timeForaNome, ligaId: liga.id } });
+    if (!timeCasa) throw new Error(`Time de seed não encontrado no catálogo: ${seed.timeCasaNome}`);
+    if (!timeFora) throw new Error(`Time de seed não encontrado no catálogo: ${seed.timeForaNome}`);
+
+    resolvidas.push({
+      data: seed.data,
+      ligaId: liga.id,
+      timeCasaId: timeCasa.id,
+      timeForaId: timeFora.id,
+      mercado: seed.mercado,
+      metodoId: metodo.id,
+      tipo: seed.tipo,
+      momento: seed.momento,
+      oddEntrada: seed.oddEntrada,
+      oddSaida: seed.oddSaida,
+      stake: seed.stake,
+      responsabilidade: seed.responsabilidade,
+      resultado: seed.resultado,
+      lucro: seed.lucro,
+      observacoes: seed.observacoes,
+    });
+  }
+
+  return resolvidas;
 }
