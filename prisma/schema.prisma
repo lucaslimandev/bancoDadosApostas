@@ -20,14 +20,66 @@ enum ResultadoOperacao {
   Anulado
 }
 
+enum LigaTipo {
+  Liga
+  Copa
+  Continental
+  Selecoes
+}
+
+model Metodo {
+  id          String     @id @default(cuid())
+  nome        String     @unique
+  descricao   String?
+  cor         String     @default("#facc15")
+  ativo       Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  operacoes   Operacao[]
+}
+
+model Liga {
+  id          String     @id @default(cuid())
+  nome        String     @unique
+  pais        String
+  tipo        LigaTipo   @default(Liga)
+  nivel       String?
+  ativo       Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  times       Time[]
+  operacoes   Operacao[]
+}
+
+model Time {
+  id            String     @id @default(cuid())
+  nome          String
+  pais          String?
+  abreviacao    String?
+  ativo         Boolean    @default(true)
+  ligaId        String?
+  liga          Liga?      @relation(fields: [ligaId], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  operacoesCasa Operacao[] @relation("TimeCasa")
+  operacoesFora Operacao[] @relation("TimeFora")
+
+  @@index([ligaId])
+  @@index([nome])
+}
+
 model Operacao {
   id              String            @id @default(cuid())
   data            DateTime
-  liga            String
-  timeCasa        String
-  timeFora        String
+  ligaId          String
+  liga            Liga              @relation(fields: [ligaId], references: [id], onDelete: Restrict)
+  timeCasaId      String
+  timeCasa        Time              @relation("TimeCasa", fields: [timeCasaId], references: [id], onDelete: Restrict)
+  timeForaId      String
+  timeFora        Time              @relation("TimeFora", fields: [timeForaId], references: [id], onDelete: Restrict)
   mercado         String
-  metodo          String
+  metodoId        String
+  metodo          Metodo            @relation(fields: [metodoId], references: [id], onDelete: Restrict)
   tipo            TipoOperacao
   momento         String
   oddEntrada      Float
@@ -41,8 +93,8 @@ model Operacao {
   updatedAt       DateTime          @updatedAt
 
   @@index([data])
-  @@index([liga])
-  @@index([metodo])
+  @@index([ligaId])
+  @@index([metodoId])
   @@index([tipo])
 }
 
