@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, Copy, MoreHorizontal, Pencil, Search, Trash2 } from "lucide-react";
 import { cn, formatU } from "@/lib/utils";
@@ -40,11 +41,17 @@ export function OperacoesTable({
   onEdit,
   onDuplicate,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: {
   operacoes: Operacao[];
   onEdit: (op: Operacao) => void;
   onDuplicate: (op: Operacao) => void;
   onDelete: (op: Operacao) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (idsFiltrados: string[]) => void;
 }) {
   const [busca, setBusca] = useState("");
   const [coluna, setColuna] = useState<Coluna>("data");
@@ -55,7 +62,7 @@ export function OperacoesTable({
     const termo = busca.trim().toLowerCase();
     if (!termo) return operacoes;
     return operacoes.filter((op) =>
-      [op.liga, op.timeCasa, op.timeFora, op.mercado, op.metodo, op.tipo, op.resultado]
+      [op.liga.nome, op.timeCasa.nome, op.timeFora.nome, op.mercado, op.metodo.nome, op.tipo, op.resultado]
         .join(" ")
         .toLowerCase()
         .includes(termo)
@@ -69,6 +76,8 @@ export function OperacoesTable({
       if (coluna === "data") comp = new Date(a.data).getTime() - new Date(b.data).getTime();
       else if (coluna === "stake") comp = a.stake - b.stake;
       else if (coluna === "lucro") comp = a.lucro - b.lucro;
+      else if (coluna === "liga") comp = a.liga.nome.localeCompare(b.liga.nome);
+      else if (coluna === "metodo") comp = a.metodo.nome.localeCompare(b.metodo.nome);
       else comp = String(a[coluna]).localeCompare(String(b[coluna]));
       return asc ? comp : -comp;
     });
@@ -78,6 +87,10 @@ export function OperacoesTable({
   const totalPaginas = Math.max(1, Math.ceil(ordenadas.length / PAGE_SIZE));
   const paginaAtual = Math.min(pagina, totalPaginas);
   const paginadas = ordenadas.slice((paginaAtual - 1) * PAGE_SIZE, paginaAtual * PAGE_SIZE);
+
+  const idsFiltrados = useMemo(() => ordenadas.map((o) => o.id), [ordenadas]);
+  const todosSelecionados = idsFiltrados.length > 0 && idsFiltrados.every((id) => selectedIds.has(id));
+  const algunsSelecionados = !todosSelecionados && idsFiltrados.some((id) => selectedIds.has(id));
 
   function ordenarPor(c: Coluna) {
     if (c === coluna) setAsc(!asc);
@@ -109,6 +122,13 @@ export function OperacoesTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={todosSelecionados}
+                  indeterminate={algunsSelecionados}
+                  onCheckedChange={() => onToggleSelectAll(idsFiltrados)}
+                />
+              </TableHead>
               <TableHead><CabecalhoOrdenavel c="data" coluna={coluna} onSort={ordenarPor}>Data</CabecalhoOrdenavel></TableHead>
               <TableHead>Jogo</TableHead>
               <TableHead><CabecalhoOrdenavel c="liga" coluna={coluna} onSort={ordenarPor}>Liga</CabecalhoOrdenavel></TableHead>
@@ -123,21 +143,29 @@ export function OperacoesTable({
           <TableBody>
             {paginadas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-10">
                   Nenhuma operação encontrada.
                 </TableCell>
               </TableRow>
             )}
             {paginadas.map((op) => (
-              <TableRow key={op.id}>
+              <TableRow key={op.id} data-state={selectedIds.has(op.id) ? "selected" : undefined}>
+                <TableCell>
+                  <Checkbox checked={selectedIds.has(op.id)} onCheckedChange={() => onToggleSelect(op.id)} />
+                </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                   {format(new Date(op.data), "dd/MM/yy HH:mm", { locale: ptBR })}
                 </TableCell>
                 <TableCell className="text-sm">
-                  {op.timeCasa} <span className="text-muted-foreground">x</span> {op.timeFora}
+                  {op.timeCasa.nome} <span className="text-muted-foreground">x</span> {op.timeFora.nome}
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{op.liga}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{op.metodo}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{op.liga.nome}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="size-2 rounded-full shrink-0" style={{ background: op.metodo.cor }} />
+                    {op.metodo.nome}
+                  </span>
+                </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{op.tipo}</Badge>
                 </TableCell>

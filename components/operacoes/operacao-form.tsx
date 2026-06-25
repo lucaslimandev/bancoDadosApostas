@@ -1,20 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { operacaoSchema, type OperacaoFormValues } from "@/lib/schemas";
 import { calcResponsabilidade, calcLucroSugerido } from "@/lib/calculations";
-import { LIGAS, METODOS, MOMENTOS_SUGERIDOS, TIPOS_OPERACAO, RESULTADOS_OPERACAO } from "@/lib/constants";
+import { MOMENTOS_SUGERIDOS, TIPOS_OPERACAO, RESULTADOS_OPERACAO } from "@/lib/constants";
+import type { Liga, Metodo, Time } from "@/lib/types";
+import { criarLiga } from "@/lib/actions/ligas";
+import { criarMetodo } from "@/lib/actions/metodos";
+import { criarTimeInline } from "@/lib/actions/times";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Wand2 } from "lucide-react";
 
+const TIPO_LIGA_LABEL: Record<string, string> = { Liga: "Ligas", Copa: "Copas", Continental: "Continentais", Selecoes: "Seleções" };
+
 export type OperacaoFormProps = {
+  ligas: Liga[];
+  metodos: Metodo[];
+  times: Time[];
   defaultValues?: Partial<OperacaoFormValues>;
   onSubmit: (values: OperacaoFormValues) => Promise<void> | void;
   onCancel?: () => void;
@@ -22,7 +32,16 @@ export type OperacaoFormProps = {
   isSubmitting?: boolean;
 };
 
-export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = "Salvar", isSubmitting }: OperacaoFormProps) {
+export function OperacaoForm({
+  ligas,
+  metodos,
+  times,
+  defaultValues,
+  onSubmit,
+  onCancel,
+  submitLabel = "Salvar",
+  isSubmitting,
+}: OperacaoFormProps) {
   const {
     register,
     handleSubmit,
@@ -33,11 +52,11 @@ export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = 
     resolver: zodResolver(operacaoSchema),
     defaultValues: {
       data: new Date(),
-      liga: LIGAS[0],
-      timeCasa: "",
-      timeFora: "",
+      ligaId: ligas[0]?.id ?? "",
+      timeCasaId: "",
+      timeForaId: "",
       mercado: "",
-      metodo: METODOS[0],
+      metodoId: metodos[0]?.id ?? "",
       tipo: "Lay",
       momento: "Pré-jogo",
       oddEntrada: 2,
@@ -56,6 +75,10 @@ export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = 
   const oddEntrada = watch("oddEntrada");
   const oddSaida = watch("oddSaida");
   const stake = watch("stake");
+  const ligaId = watch("ligaId");
+  const metodoId = watch("metodoId");
+  const timeCasaId = watch("timeCasaId");
+  const timeForaId = watch("timeForaId");
 
   useEffect(() => {
     if (tipo === "Lay" && oddEntrada > 0 && stake > 0) {
@@ -77,11 +100,16 @@ export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = 
   const dataValue = watch("data");
   const dataISO = dataValue instanceof Date && !isNaN(dataValue.getTime()) ? format(dataValue, "yyyy-MM-dd'T'HH:mm") : "";
 
+  const opcoesLiga = useMemo(
+    () => ligas.map((l) => ({ value: l.id, label: l.nome, group: TIPO_LIGA_LABEL[l.tipo] ?? l.tipo })),
+    [ligas]
+  );
+  const opcoesMetodo = useMemo(() => metodos.map((m) => ({ value: m.id, label: m.nome })), [metodos]);
+  const timesDaLiga = useMemo(() => times.filter((t) => !ligaId || t.ligaId === ligaId), [times, ligaId]);
+  const opcoesTime = useMemo(() => timesDaLiga.map((t) => ({ value: t.id, label: t.nome })), [timesDaLiga]);
+
   return (
-    <form
-      onSubmit={handleSubmit((values) => onSubmit(values))}
-      className="space-y-4"
-    >
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5 col-span-2">
           <Label>Data e hora</Label>
@@ -93,18 +121,23 @@ export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = 
           {errors.data && <p className="text-xs text-destructive">{String(errors.data.message)}</p>}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 col-span-2">
           <Label>Liga</Label>
-          <Input list="ligas-sugeridas" {...register("liga")} placeholder="Ex.: Brasileirão Série A" />
-          <datalist id="ligas-sugeridas">
-            {LIGAS.map((l) => (
-              <option key={l} value={l} />
-            ))}
-          </datalist>
-          {errors.liga && <p className="text-xs text-destructive">{errors.liga.message}</p>}
+          <Combobox
+            options={opcoesLiga}
+            value={ligaId}
+            onChange={(v) => setValue("ligaId", v)}
+            placeholder="Selecione a liga"
+            searchPlaceholder="Buscar liga..."
+            onCreateNew={async (texto) => {
+              const nova = await criarLiga({ nome: texto, pais: "A definir", tipo: "Liga", nivel: null, ativo: true });
+              return { value: nova.id, label: nova.nome, group: TIPO_LIGA_LABEL[nova.tipo] };
+            }}
+          />
+          {errors.ligaId && <p className="text-xs text-destructive">{errors.ligaId.message}</p>}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 col-span-2">
           <Label>Mercado</Label>
           <Input {...register("mercado")} placeholder="Ex.: Resultado Final" />
           {errors.mercado && <p className="text-xs text-destructive">{errors.mercado.message}</p>}
@@ -112,25 +145,50 @@ export function OperacaoForm({ defaultValues, onSubmit, onCancel, submitLabel = 
 
         <div className="space-y-1.5">
           <Label>Time da casa</Label>
-          <Input {...register("timeCasa")} placeholder="Ex.: Flamengo" />
-          {errors.timeCasa && <p className="text-xs text-destructive">{errors.timeCasa.message}</p>}
+          <Combobox
+            options={opcoesTime}
+            value={timeCasaId}
+            onChange={(v) => setValue("timeCasaId", v)}
+            placeholder="Selecione o time"
+            searchPlaceholder="Buscar time..."
+            onCreateNew={async (texto) => {
+              const novo = await criarTimeInline(texto, ligaId || null);
+              return { value: novo.id, label: novo.nome };
+            }}
+          />
+          {errors.timeCasaId && <p className="text-xs text-destructive">{errors.timeCasaId.message}</p>}
         </div>
 
         <div className="space-y-1.5">
           <Label>Time visitante</Label>
-          <Input {...register("timeFora")} placeholder="Ex.: Palmeiras" />
-          {errors.timeFora && <p className="text-xs text-destructive">{errors.timeFora.message}</p>}
+          <Combobox
+            options={opcoesTime}
+            value={timeForaId}
+            onChange={(v) => setValue("timeForaId", v)}
+            placeholder="Selecione o time"
+            searchPlaceholder="Buscar time..."
+            onCreateNew={async (texto) => {
+              const novo = await criarTimeInline(texto, ligaId || null);
+              return { value: novo.id, label: novo.nome };
+            }}
+          />
+          {errors.timeForaId && <p className="text-xs text-destructive">{errors.timeForaId.message}</p>}
         </div>
 
         <div className="space-y-1.5">
           <Label>Método</Label>
-          <Input list="metodos-sugeridos" {...register("metodo")} placeholder="Ex.: Lay Empate" />
-          <datalist id="metodos-sugeridos">
-            {METODOS.map((m) => (
-              <option key={m} value={m} />
-            ))}
-          </datalist>
-          {errors.metodo && <p className="text-xs text-destructive">{errors.metodo.message}</p>}
+          <Combobox
+            options={opcoesMetodo}
+            value={metodoId}
+            onChange={(v) => setValue("metodoId", v)}
+            placeholder="Selecione o método"
+            searchPlaceholder="Buscar método..."
+            onCreateNew={async (texto) => {
+              const novo = await criarMetodo({ nome: texto, descricao: null, cor: "#64748b", ativo: true });
+              return { value: novo.id, label: novo.nome };
+            }}
+          />
+          {errors.metodoId && <p className="text-xs text-destructive">{errors.metodoId.message}</p>}
         </div>
 
         <div className="space-y-1.5">
