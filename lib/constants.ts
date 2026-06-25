@@ -1,19 +1,3 @@
-export const LIGAS = [
-  "Brasileirão Série A",
-  "Premier League",
-  "La Liga",
-  "Serie A",
-  "Bundesliga",
-  "Ligue 1",
-] as const;
-
-export const METODOS = [
-  "Pressão Reversa",
-  "Scalping Ao Vivo",
-  "Lay Empate",
-  "Cash Out Verde",
-] as const;
-
 export const MOMENTOS_SUGERIDOS = ["Pré-jogo", "1ºT", "Intervalo", "2ºT", "Acréscimos"] as const;
 
 export const TIPOS_OPERACAO = ["Lay", "Back", "Trade"] as const;

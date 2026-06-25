@@ -41,9 +41,34 @@ export async function limparTodosOsDados() {
 }
 
 export async function restaurarDadosDeExemplo() {
-  const { gerarOperacoesExemplo } = await import("@/lib/seed-data");
+  const { resolverOperacoesExemplo } = await import("@/lib/seed-data");
+  const { METODOS_SEED, LIGAS_SEED, TIMES_SEED } = await import("@/lib/seed-catalogs");
+
+  for (const m of METODOS_SEED) {
+    await prisma.metodo.upsert({
+      where: { nome: m.nome },
+      update: { cor: m.cor, descricao: m.descricao },
+      create: { nome: m.nome, cor: m.cor, descricao: m.descricao },
+    });
+  }
+  for (const l of LIGAS_SEED) {
+    await prisma.liga.upsert({
+      where: { nome: l.nome },
+      update: { pais: l.pais, tipo: l.tipo, nivel: l.nivel },
+      create: { nome: l.nome, pais: l.pais, tipo: l.tipo, nivel: l.nivel },
+    });
+  }
+  for (const t of TIMES_SEED) {
+    const liga = await prisma.liga.findUnique({ where: { nome: t.ligaNome } });
+    const existente = await prisma.time.findFirst({ where: { nome: t.nome, ligaId: liga?.id ?? null } });
+    if (!existente) {
+      await prisma.time.create({ data: { nome: t.nome, pais: t.pais, abreviacao: t.abreviacao, ligaId: liga?.id } });
+    }
+  }
+
+  const operacoes = await resolverOperacoesExemplo(prisma);
   await prisma.operacao.deleteMany();
-  await prisma.operacao.createMany({ data: gerarOperacoesExemplo() });
+  await prisma.operacao.createMany({ data: operacoes });
   revalidatePath("/");
   revalidatePath("/operacoes");
   revalidatePath("/calendario");

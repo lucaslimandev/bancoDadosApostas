@@ -2,11 +2,11 @@ import { z } from "zod";
 
 export const operacaoSchema = z.object({
   data: z.date(),
-  liga: z.string().min(1, "Informe a liga"),
-  timeCasa: z.string().min(1, "Informe o time da casa"),
-  timeFora: z.string().min(1, "Informe o time visitante"),
+  ligaId: z.string().min(1, "Selecione a liga"),
+  timeCasaId: z.string().min(1, "Selecione o time da casa"),
+  timeForaId: z.string().min(1, "Selecione o time visitante"),
   mercado: z.string().min(1, "Informe o mercado"),
-  metodo: z.string().min(1, "Informe o método"),
+  metodoId: z.string().min(1, "Selecione o método"),
   tipo: z.enum(["Lay", "Back", "Trade"]),
   momento: z.string().min(1, "Informe o momento"),
   oddEntrada: z.number().positive("Odd deve ser positiva"),
@@ -19,6 +19,37 @@ export const operacaoSchema = z.object({
 });
 
 export type OperacaoFormValues = z.infer<typeof operacaoSchema>;
+
+export const metodoSchema = z.object({
+  nome: z.string().min(1, "Informe o nome"),
+  descricao: z.string().nullish(),
+  cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor deve ser um hex válido, ex.: #3b82f6"),
+  ativo: z.boolean(),
+});
+
+export type MetodoFormValues = z.infer<typeof metodoSchema>;
+
+export const ligaTipoEnum = z.enum(["Liga", "Copa", "Continental", "Selecoes"]);
+
+export const ligaSchema = z.object({
+  nome: z.string().min(1, "Informe o nome"),
+  pais: z.string().min(1, "Informe o país"),
+  tipo: ligaTipoEnum,
+  nivel: z.string().nullish(),
+  ativo: z.boolean(),
+});
+
+export type LigaFormValues = z.infer<typeof ligaSchema>;
+
+export const timeSchema = z.object({
+  nome: z.string().min(1, "Informe o nome"),
+  pais: z.string().nullish(),
+  abreviacao: z.string().nullish(),
+  ligaId: z.string().nullish(),
+  ativo: z.boolean(),
+});
+
+export type TimeFormValues = z.infer<typeof timeSchema>;
 
 export const configuracaoSchema = z.object({
   bancaInicial: z.number().positive(),

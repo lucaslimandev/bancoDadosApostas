@@ -176,20 +176,21 @@ export function lucroPorDia(operacoes: Operacao[]): Map<string, number> {
   return mapa;
 }
 
-export function lucroPorMetodo(operacoes: Operacao[]): Array<{ metodo: string; lucro: number }> {
-  const mapa = new Map<string, number>();
+export function lucroPorMetodo(operacoes: Operacao[]): Array<{ metodo: string; lucro: number; cor: string }> {
+  const mapa = new Map<string, { lucro: number; cor: string }>();
   for (const op of operacoes) {
-    mapa.set(op.metodo, round2((mapa.get(op.metodo) ?? 0) + op.lucro));
+    const atual = mapa.get(op.metodo.nome) ?? { lucro: 0, cor: op.metodo.cor };
+    mapa.set(op.metodo.nome, { lucro: round2(atual.lucro + op.lucro), cor: op.metodo.cor });
   }
   return Array.from(mapa.entries())
-    .map(([metodo, lucro]) => ({ metodo, lucro }))
+    .map(([metodo, v]) => ({ metodo, lucro: v.lucro, cor: v.cor }))
     .sort((a, b) => b.lucro - a.lucro);
 }
 
 export function lucroPorLiga(operacoes: Operacao[]): Array<{ liga: string; lucro: number }> {
   const mapa = new Map<string, number>();
   for (const op of operacoes) {
-    mapa.set(op.liga, round2((mapa.get(op.liga) ?? 0) + op.lucro));
+    mapa.set(op.liga.nome, round2((mapa.get(op.liga.nome) ?? 0) + op.lucro));
   }
   return Array.from(mapa.entries())
     .map(([liga, lucro]) => ({ liga, lucro }))
