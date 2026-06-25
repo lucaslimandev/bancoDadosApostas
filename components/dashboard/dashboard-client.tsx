@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Operacao, Configuracao } from "@/lib/types";
+import type { Operacao, Configuracao, Liga, Metodo, Time } from "@/lib/types";
 import { useFiltrosStore } from "@/lib/store/filters";
 import { aplicarFiltros } from "@/lib/filter-operacoes";
 import { calcularMetricas, distribuicaoTipo, lucroPorLiga, lucroPorMetodo } from "@/lib/calculations";
@@ -15,7 +15,19 @@ import { DistribuicaoTipoChart } from "@/components/charts/distribuicao-tipo-cha
 import { Wallet, TrendingUp, Percent, Target, Landmark, ListOrdered, TrendingDown, Flame } from "lucide-react";
 import { EmptyDashboard } from "@/components/dashboard/empty-dashboard";
 
-export function DashboardClient({ operacoes, configuracao }: { operacoes: Operacao[]; configuracao: Configuracao }) {
+export function DashboardClient({
+  operacoes,
+  configuracao,
+  ligas,
+  metodos,
+  times,
+}: {
+  operacoes: Operacao[];
+  configuracao: Configuracao;
+  ligas: Liga[];
+  metodos: Metodo[];
+  times: Time[];
+}) {
   const filtros = useFiltrosStore();
   const filtradas = useMemo(() => aplicarFiltros(operacoes, filtros), [operacoes, filtros]);
   const metricas = useMemo(() => calcularMetricas(filtradas, configuracao.bancaInicial), [filtradas, configuracao.bancaInicial]);
@@ -35,7 +47,7 @@ export function DashboardClient({ operacoes, configuracao }: { operacoes: Operac
         <p className="text-sm text-muted-foreground">Visão geral da sua performance como trader esportivo.</p>
       </div>
 
-      <FiltrosBar />
+      <FiltrosBar ligas={ligas} metodos={metodos} times={times} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <KpiCard

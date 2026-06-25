@@ -3,21 +3,39 @@
 import { useMemo, useState } from "react";
 import { addMonths, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Operacao, Configuracao } from "@/lib/types";
+import type { Operacao, Configuracao, Liga, Metodo, Time } from "@/lib/types";
 import { diaKey, operacoesPorDia } from "@/lib/calculations";
+import { useFiltrosStore } from "@/lib/store/filters";
+import { aplicarFiltros } from "@/lib/filter-operacoes";
 import { MonthGrid, type DiaResumo } from "@/components/calendario/month-grid";
 import { ListView } from "@/components/calendario/list-view";
 import { DayPanel } from "@/components/calendario/day-panel";
+import { FiltrosBar } from "@/components/dashboard/filtros-bar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export function CalendarioClient({ operacoes, configuracao }: { operacoes: Operacao[]; configuracao: Configuracao }) {
+export function CalendarioClient({
+  operacoes,
+  configuracao,
+  ligas,
+  metodos,
+  times,
+}: {
+  operacoes: Operacao[];
+  configuracao: Configuracao;
+  ligas: Liga[];
+  metodos: Metodo[];
+  times: Time[];
+}) {
   const [mesAtual, setMesAtual] = useState(new Date());
   const [visao, setVisao] = useState<"mes" | "lista">("mes");
   const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null);
 
-  const porDia = useMemo(() => operacoesPorDia(operacoes), [operacoes]);
+  const filtros = useFiltrosStore();
+  const operacoesFiltradas = useMemo(() => aplicarFiltros(operacoes, filtros), [operacoes, filtros]);
+
+  const porDia = useMemo(() => operacoesPorDia(operacoesFiltradas), [operacoesFiltradas]);
 
   const resumosPorDia = useMemo(() => {
     const mapa = new Map<string, DiaResumo>();
@@ -40,11 +58,11 @@ export function CalendarioClient({ operacoes, configuracao }: { operacoes: Opera
 
   const operacoesDoMes = useMemo(
     () =>
-      operacoes.filter((op) => {
+      operacoesFiltradas.filter((op) => {
         const d = new Date(op.data);
         return d.getFullYear() === mesAtual.getFullYear() && d.getMonth() === mesAtual.getMonth();
       }),
-    [operacoes, mesAtual]
+    [operacoesFiltradas, mesAtual]
   );
 
   const operacoesDoDiaSelecionado = diaSelecionado ? porDia.get(diaKey(diaSelecionado)) ?? [] : [];
@@ -63,6 +81,8 @@ export function CalendarioClient({ operacoes, configuracao }: { operacoes: Opera
           </TabsList>
         </Tabs>
       </div>
+
+      <FiltrosBar ligas={ligas} metodos={metodos} times={times} mostrarPeriodo={false} />
 
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" size="icon" onClick={() => setMesAtual(subMonths(mesAtual, 1))}>
@@ -85,7 +105,14 @@ export function CalendarioClient({ operacoes, configuracao }: { operacoes: Opera
         <ListView operacoes={operacoesDoMes} onSelectDay={setDiaSelecionado} />
       )}
 
-      <DayPanel data={diaSelecionado} operacoes={operacoesDoDiaSelecionado} onClose={() => setDiaSelecionado(null)} />
+      <DayPanel
+        data={diaSelecionado}
+        operacoes={operacoesDoDiaSelecionado}
+        ligas={ligas}
+        metodos={metodos}
+        times={times}
+        onClose={() => setDiaSelecionado(null)}
+      />
     </div>
   );
 }

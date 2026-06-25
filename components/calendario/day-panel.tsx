@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import type { Operacao } from "@/lib/types";
+import type { Operacao, Liga, Metodo, Time } from "@/lib/types";
 import type { OperacaoFormValues } from "@/lib/schemas";
 import { criarOperacao } from "@/lib/actions/operacoes";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -19,10 +19,16 @@ import { Plus, ArrowLeft } from "lucide-react";
 export function DayPanel({
   data,
   operacoes,
+  ligas,
+  metodos,
+  times,
   onClose,
 }: {
   data: Date | null;
   operacoes: Operacao[];
+  ligas: Liga[];
+  metodos: Metodo[];
+  times: Time[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -67,6 +73,9 @@ export function DayPanel({
         <div className="px-4 pb-4 space-y-4">
           {criando ? (
             <OperacaoForm
+              ligas={ligas}
+              metodos={metodos}
+              times={times}
               defaultValues={data ? { data } : undefined}
               onSubmit={handleCreate}
               onCancel={() => setCriando(false)}
@@ -109,7 +118,7 @@ export function DayPanel({
                     <CardContent className="p-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">
-                          {op.timeCasa} <span className="text-muted-foreground">x</span> {op.timeFora}
+                          {op.timeCasa.nome} <span className="text-muted-foreground">x</span> {op.timeFora.nome}
                         </span>
                         <Badge
                           className={cn(
@@ -123,11 +132,11 @@ export function DayPanel({
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Badge variant="secondary" className="text-[10px]">{op.tipo}</Badge>
-                        <span>{op.liga}</span>
+                        <span>{op.liga.nome}</span>
                         <span>·</span>
                         <span>{op.mercado}</span>
                         <span>·</span>
-                        <span>{op.metodo}</span>
+                        <span>{op.metodo.nome}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">

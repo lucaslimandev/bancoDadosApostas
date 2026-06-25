@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/charts/banca-chart";
 
-export function LucroPorMetodoChart({ dados }: { dados: Array<{ metodo: string; lucro: number }> }) {
+export function LucroPorMetodoChart({ dados }: { dados: Array<{ metodo: string; lucro: number; cor: string }> }) {
   return (
     <Card>
       <CardHeader>
@@ -25,7 +25,7 @@ export function LucroPorMetodoChart({ dados }: { dados: Array<{ metodo: string; 
               />
               <Bar dataKey="lucro" radius={[6, 6, 0, 0]}>
                 {dados.map((d, i) => (
-                  <Cell key={i} fill={d.lucro >= 0 ? "var(--color-profit)" : "var(--color-loss)"} />
+                  <Cell key={i} fill={d.cor} />
                 ))}
               </Bar>
             </BarChart>
