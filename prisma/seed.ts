@@ -4,8 +4,9 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { resolverOperacoesExemplo } from "../lib/seed-data";
 import { METODOS_SEED, LIGAS_SEED, TIMES_SEED } from "../lib/seed-catalogs";
+import { resolveDatabaseUrl } from "../lib/database-url";
 
-const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
+const databaseUrl = resolveDatabaseUrl();
 const adapter = databaseUrl.startsWith("postgres")
   ? new PrismaPg({ connectionString: databaseUrl })
   : new PrismaBetterSqlite3({ url: databaseUrl });
